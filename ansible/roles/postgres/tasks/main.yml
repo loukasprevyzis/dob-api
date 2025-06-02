@@ -1,0 +1,18 @@
+- name: Ensure 'acl' package is installed for permission management
+  apt:
+    name: acl
+    state: present
+    update_cache: yes
+  become: yes
+
+- include_tasks: primary.yml
+  when: "'postgres_primary' in group_names"
+
+- include_tasks: replica.yml
+  when: "'postgres_replicas' in group_names"
+
+- include_tasks: primary-dr.yml
+  when: "'postgres_primary_dr' in group_names"
+
+- include_tasks: replica-dr.yml
+  when: "'postgres_replicas_dr' in group_names"

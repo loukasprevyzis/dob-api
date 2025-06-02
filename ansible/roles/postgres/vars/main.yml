@@ -1,0 +1,14 @@
+pg_version: 12
+data_dir: /var/lib/postgresql/data
+pgdata_dir: "{{ data_dir }}/pgdata"
+postgres_password: "5HP3sU4Lcw7JTtJ"
+replication_user: replica
+replication_password: "5HP3sU4Lcw7JTtJ"
+app_user: dob_api_user
+app_password: "TkmP8qLox6sCy3o"
+app_db: dob_api_db
+block_device: /dev/nvme1n1
+primary_private_ip: 10.0.1.126
+replica_private_ip: 10.0.1.237
+primary_dr_private_ip: 10.1.1.145
+replica_dr_private_ip: 10.1.1.240

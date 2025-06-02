@@ -1,0 +1,178 @@
+- name: Install PostgreSQL packages
+  apt:
+    name:
+      - postgresql-12
+      - postgresql-contrib-12
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Ensure PostgreSQL listens on all addresses
+  lineinfile:
+    path: /etc/postgresql/12/main/postgresql.conf
+    regexp: '^#?listen_addresses\s*='
+    line: "listen_addresses = '*'"
+  become: yes
+
+- name: Wait for block device /dev/nvme1n1
+  wait_for:
+    path: /dev/nvme1n1
+    state: present
+    timeout: 30
+
+- name: Format block device if not formatted
+  command: mkfs.ext4 /dev/nvme1n1
+  args:
+    creates: /dev/disk/by-uuid/nvme1n1
+  ignore_errors: yes
+  become: yes
+
+- name: Create mount point directory
+  file:
+    path: /var/lib/postgresql/data
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+  become: yes
+
+- name: Mount block device
+  mount:
+    path: /var/lib/postgresql/data
+    src: /dev/nvme1n1
+    fstype: ext4
+    opts: defaults,nofail
+    state: mounted
+
+- name: Ensure PGDATA and parent directory owned by postgres recursively
+  file:
+    path: /var/lib/postgresql/data
+    state: directory
+    owner: postgres
+    group: postgres
+    recurse: yes
+    mode: '0700'
+  become: yes
+
+- name: Stop PostgreSQL service
+  service:
+    name: postgresql
+    state: stopped
+  become: yes
+
+- name: Remove existing PGDATA directory if exists (for fresh initdb)
+  file:
+    path: /var/lib/postgresql/data/pgdata
+    state: absent
+  become: yes
+
+- name: Initialize database cluster if missing
+  command: /usr/lib/postgresql/12/bin/initdb -D /var/lib/postgresql/data/pgdata
+  args:
+    creates: /var/lib/postgresql/data/pgdata/PG_VERSION
+  become: yes
+  become_user: postgres
+
+
+- name: Ensure local postgres user uses md5 authentication
+  lineinfile:
+    path: /etc/postgresql/12/main/pg_hba.conf
+    regexp: '^local\s+all\s+postgres\s+'
+    line: 'local all postgres md5'
+    state: present
+  become: yes
+
+- name: Ensure md5 for postgres user on localhost IPv4
+  lineinfile:
+    path: /etc/postgresql/12/main/pg_hba.conf
+    regexp: '^host\s+all\s+postgres\s+127\.0\.0\.1/32\s+'
+    line: 'host all postgres 127.0.0.1/32 md5'
+    state: present
+  become: yes
+
+- name: Ensure md5 for postgres user on localhost IPv6
+  lineinfile:
+    path: /etc/postgresql/12/main/pg_hba.conf
+    regexp: '^host\s+all\s+postgres\s+::1/128\s+'
+    line: 'host all postgres ::1/128 md5'
+    state: present
+  become: yes
+
+- name: Ensure replication allowed only from replica private IP with md5
+  lineinfile:
+    path: /etc/postgresql/12/main/pg_hba.conf
+    line: "host replication replica {{ replica_private_ip }}/32 md5"
+    state: present
+  become: yes
+
+- name: Ensure md5 authentication for application user dob_api_user
+  lineinfile:
+    path: /etc/postgresql/12/main/pg_hba.conf
+    line: 'host all dob_api_user 0.0.0.0/0 md5'
+    state: present
+  become: yes
+
+- name: Restart PostgreSQL to apply pg_hba.conf changes
+  service:
+    name: postgresql
+    state: restarted
+  become: yes
+
+- name: Wait for PostgreSQL to restart and be ready
+  wait_for:
+    port: 5432
+    delay: 2
+    timeout: 30
+
+- name: Set password for postgres user using SQL via local command
+  shell: |
+    sudo -u postgres psql -d postgres -c "ALTER USER postgres WITH PASSWORD '{{ postgres_password }}';"
+  args:
+    executable: /bin/bash
+
+- name: Create replication role if missing
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: "{{ replication_user }}"
+    password: "{{ replication_password }}"
+    role_attr_flags: "REPLICATION,LOGIN"
+    state: present
+
+- name: Create application role if missing
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: "{{ app_user }}"
+    password: "{{ app_password }}"
+    state: present
+
+- name: Create application database if missing
+  become: true
+  become_user: postgres
+  postgresql_db:
+    name: "{{ app_db }}"
+    owner: "{{ app_user }}"
+    state: present
+
+- name: Create users table if missing
+  become: true
+  become_user: postgres
+  postgresql_query:
+    db: "{{ app_db }}"
+    query: |
+      CREATE TABLE IF NOT EXISTS users (
+        username VARCHAR(255) PRIMARY KEY,
+        date_of_birth DATE NOT NULL CHECK (date_of_birth < CURRENT_DATE)
+      );
+
+- name: Grant privileges on users table to app user
+  become: true
+  become_user: postgres
+  postgresql_privs:
+    db: "{{ app_db }}"
+    roles: "{{ app_user }}"
+    objs: users
+    type: table
+    privs: "SELECT,INSERT,UPDATE"
+    state: present
