@@ -1,0 +1,13 @@
+.git
+.gitignore
+tests/
+*.test
+*.md
+.env
+.env.local
+.vscode/
+.idea/
+*.swp
+*.swo
+dob-api
+migrations/

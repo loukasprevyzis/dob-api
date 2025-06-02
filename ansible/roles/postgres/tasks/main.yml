@@ -16,3 +16,5 @@
 
 - include_tasks: replica-dr.yml
   when: "'postgres_replicas_dr' in group_names"
+
+- include_tasks: db-backup.yml

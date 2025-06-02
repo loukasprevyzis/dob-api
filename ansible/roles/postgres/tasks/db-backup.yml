@@ -1,0 +1,114 @@
+- name: Install dependencies for AWS CLI
+  become: yes
+  apt:
+    name:
+      - unzip
+      - curl
+    state: present
+    update_cache: yes
+
+- name: Download AWS CLI v2 installer
+  become: yes
+  get_url:
+    url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp/awscliv2.zip
+    mode: '0644'
+
+- name: Unzip AWS CLI installer
+  become: yes
+  unarchive:
+    src: /tmp/awscliv2.zip
+    dest: /tmp/
+    remote_src: yes
+
+- name: Install AWS CLI v2
+  become: yes
+  command: /tmp/aws/install --update
+  args:
+    creates: /usr/local/bin/aws
+
+- name: Verify AWS CLI installed
+  command: aws --version
+  register: awscli_version
+  changed_when: false
+
+- debug:
+    msg: "AWS CLI version installed: {{ awscli_version.stdout }}"
+
+- name: Ensure WAL archive directory exists
+  become: yes
+  become_user: postgres
+  file:
+    path: /var/lib/postgresql/wal_archive
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+
+- name: Set postgresql.conf parameters for WAL archiving to upload WALs to S3
+  become: yes
+  become_user: postgres
+  lineinfile:
+    path: /etc/postgresql/12/main/postgresql.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^archive_mode', line: 'archive_mode = on' }
+    - { regexp: '^archive_command', line: "archive_command = 'aws s3 cp %p s3://{{ s3_bucket_map[inventory_hostname] }}/wal_archive/%f'" }
+    - { regexp: '^archive_timeout', line: 'archive_timeout = 60' }
+    - { regexp: '^wal_level', line: 'wal_level = replica' }
+    - { regexp: '^max_wal_senders', line: 'max_wal_senders = 10' }
+    - { regexp: '^wal_keep_segments', line: 'wal_keep_segments = 64' }
+
+- name: Reload PostgreSQL to apply WAL archiving config
+  become: yes
+  command: systemctl reload postgresql@12-main
+
+- name: Deploy base backup script for backups and retention to upload base backups to S3
+  become: yes
+  copy:
+    dest: /usr/local/bin/pg_basebackup.sh
+    mode: '0755'
+    content: |
+      #!/bin/bash
+      BACKUP_DIR=/var/lib/postgresql/base_backups
+      S3_BUCKET={{ s3_bucket_map[inventory_hostname] }}
+      mkdir -p $BACKUP_DIR
+      RETENTION_DAYS=7
+
+      # Create a timestamped base backup locally
+      pg_basebackup -h localhost -D $BACKUP_DIR/$(date +%F-%H-%M) -U replica -v -P --wal-method=stream
+
+      # Sync backups to S3 bucket
+      aws s3 sync $BACKUP_DIR s3://$S3_BUCKET/base_backups
+
+      # Clean up local backups older than retention period
+      find $BACKUP_DIR -type d -mtime +$RETENTION_DAYS -exec rm -rf {} \;
+
+- name: Fix ownership of backup script to postgres
+  become: yes
+  file:
+    path: /usr/local/bin/pg_basebackup.sh
+    owner: postgres
+    group: postgres
+
+- name: Schedule daily base backup cron job
+  become: yes
+  cron:
+    name: "PostgreSQL base backup"
+    user: postgres
+    minute: 0
+    hour: 2
+    job: "/usr/local/bin/pg_basebackup.sh >> /var/log/pg_basebackup.log 2>&1"
+
+- name: Get postgres user's crontab
+  become: yes
+  become_user: postgres
+  shell: crontab -l
+  register: crontab_list
+  changed_when: false
+  failed_when: false
+
+- name: Show crontab for postgres user
+  debug:
+    msg: "Base backup cron job entries:\n{{ crontab_list.stdout }}"

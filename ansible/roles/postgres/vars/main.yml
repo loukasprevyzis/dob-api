@@ -12,3 +12,10 @@ primary_private_ip: 10.0.1.126
 replica_private_ip: 10.0.1.237
 primary_dr_private_ip: 10.1.1.145
 replica_dr_private_ip: 10.1.1.240
+postgres_backup_bucket_primary: "dob-api-postgres-backups" # S3 bucket for primary region backups in eu-west-1
+postgres_backup_bucket_dr: "dob-api-postgres-backups" #same bucket name in eu-central-1 (DR) for simplicity
+s3_bucket_map:
+  postgres_primary: "{{ postgres_backup_bucket_primary }}"
+  postgres_primary_dr: "{{ postgres_backup_bucket_dr }}"
+  postgres_replicas: "{{ postgres_backup_bucket_primary }}"
+  postgres_replicas_dr: "{{ postgres_backup_bucket_dr }}"

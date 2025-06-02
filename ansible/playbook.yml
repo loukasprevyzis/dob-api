@@ -21,3 +21,15 @@
   become: true
   roles:
     - { role: postgres, tasks_from: replica-dr.yml }
+
+- name: Setup PostgreSQL backup and WAL archiving
+  hosts: postgres_primary
+  become: true
+  roles:
+    - { role: postgres, tasks_from: db-backup.yml }
+
+- name: Setup PostgreSQL backup and WAL archiving on DR primary
+  hosts: postgres_primary_dr
+  become: true
+  roles:
+    - { role: postgres, tasks_from: db-backup.yml }

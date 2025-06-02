@@ -15,8 +15,6 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# User-data templates (may include secrets)
-user-data*.tpl
 
 # IDE and OS junk
 .DS_Store
