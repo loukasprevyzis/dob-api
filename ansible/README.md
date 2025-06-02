@@ -87,10 +87,10 @@ The setup now uses the native Debian/Ubuntu PostgreSQL cluster service `postgres
 
 ### On the Primary
 
-```sql
+
 -- Check active replication connections
 `SELECT pid, client_addr, state, sync_state FROM pg_stat_replication;`
-
+![alt text](image.png)
 -- Check replication slot (if used)
 `SELECT * FROM pg_replication_slots;`
 
