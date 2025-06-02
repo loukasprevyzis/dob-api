@@ -1,10 +1,27 @@
-# ========== Primary DB Instance ==========
+data "aws_caller_identity" "current" {}
+
+data "aws_ssm_parameter" "ubuntu_ami" {
+  name = "/aws/service/canonical/ubuntu/server/focal/stable/current/amd64/hvm/ebs-gp2/ami-id"
+}
+
+resource "tls_private_key" "ec2_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "ec2_key" {
+  key_name   = var.ec2_ssh_key_name
+  public_key = tls_private_key.ec2_key.public_key_openssh
+}
+
 resource "aws_instance" "db_primary" {
-  ami                    = data.aws_ssm_parameter.ubuntu_ami.value
-  instance_type          = "t3.medium"
-  subnet_id              = var.private_subnet_id_primary
-  vpc_security_group_ids = [var.db_security_group_id]
-  key_name               = var.ec2_ssh_key_name
+  ami                         = data.aws_ssm_parameter.ubuntu_ami.value
+  instance_type               = "t3.small"
+  associate_public_ip_address = true
+  subnet_id                   = var.public_subnet_id
+  vpc_security_group_ids      = [var.sg_db_id]
+  key_name                    = var.ec2_ssh_key_name
+  iam_instance_profile        = aws_iam_instance_profile.ec2_postgres_instance_profile.name
 
   root_block_device {
     volume_size = var.db_data_volume_size
@@ -14,36 +31,8 @@ resource "aws_instance" "db_primary" {
   tags = {
     Name = "dob-api-db-primary"
   }
-
-  user_data = <<-EOF
-    #!/bin/bash
-    set -ex
-
-    # Update and install PostgreSQL
-    apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql postgresql-contrib
-
-    # Initialize database and ensure service is enabled
-    systemctl enable postgresql
-    systemctl start postgresql
-
-    # Create replication user with provided password
-    sudo -u postgres psql -c "CREATE ROLE replica WITH REPLICATION LOGIN ENCRYPTED PASSWORD '${var.replication_password}';"
-
-    # Configure postgresql.conf for replication
-    echo "wal_level = replica" >> /etc/postgresql/14/main/postgresql.conf
-    echo "max_wal_senders = 10" >> /etc/postgresql/14/main/postgresql.conf
-    echo "wal_keep_size = 64" >> /etc/postgresql/14/main/postgresql.conf
-
-    # Allow replication connections in pg_hba.conf (open to all for demo; restrict in prod)
-    echo "host replication replica 0.0.0.0/0 md5" >> /etc/postgresql/14/main/pg_hba.conf
-
-    # Restart PostgreSQL to apply config
-    systemctl restart postgresql
-  EOF
 }
 
-# ========== EBS volume for Primary DB data ==========
 resource "aws_ebs_volume" "db_data_primary" {
   availability_zone = aws_instance.db_primary.availability_zone
   size              = var.db_data_volume_size
@@ -60,13 +49,14 @@ resource "aws_volume_attachment" "db_data_attach_primary" {
   instance_id = aws_instance.db_primary.id
 }
 
-# ========== Replica DB Instance ==========
 resource "aws_instance" "db_replica" {
-  ami                    = data.aws_ssm_parameter.ubuntu_ami.value
-  instance_type          = "t3.medium"
-  subnet_id              = var.private_subnet_id_replica
-  vpc_security_group_ids = [var.db_security_group_id]
-  key_name               = var.ec2_ssh_key_name
+  ami                         = data.aws_ssm_parameter.ubuntu_ami.value
+  instance_type               = "t3.small"
+  associate_public_ip_address = true
+  subnet_id                     = var.public_subnet_id
+  vpc_security_group_ids        = [var.sg_db_id]
+  key_name                      = var.ec2_ssh_key_name
+  iam_instance_profile          = aws_iam_instance_profile.ec2_postgres_instance_profile.name
 
   root_block_device {
     volume_size = var.db_data_volume_size
@@ -76,45 +66,8 @@ resource "aws_instance" "db_replica" {
   tags = {
     Name = "dob-api-db-replica"
   }
-
-  user_data = <<-EOF
-    #!/bin/bash
-    set -ex
-
-    # Update and install PostgreSQL
-    apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql postgresql-contrib
-
-    # Format and mount attached volume (assumed /dev/xvdb)
-    mkfs.ext4 /dev/xvdb || true  # skip if already formatted
-    mkdir -p /var/lib/postgresql/data
-    mount /dev/xvdb /var/lib/postgresql/data
-    echo "/dev/xvdb /var/lib/postgresql/data ext4 defaults,nofail 0 2" >> /etc/fstab
-
-    # Stop PostgreSQL before base backup
-    systemctl stop postgresql || true
-
-    # Clean existing data directory
-    rm -rf /var/lib/postgresql/data/*
-
-    # Perform base backup from primary
-    sudo -u postgres pg_basebackup -h ${aws_instance.db_primary.private_ip} -D /var/lib/postgresql/data -U replica -v -P --wal-method=stream
-
-    # Set permissions
-    chown -R postgres:postgres /var/lib/postgresql/data
-
-    # Configure replication connection info
-    echo "primary_conninfo = 'host=${aws_instance.db_primary.private_ip} port=5432 user=replica password=${var.replication_password}'" >> /var/lib/postgresql/data/postgresql.conf
-
-    # For PostgreSQL 12+, create standby.signal to enable recovery mode
-    touch /var/lib/postgresql/data/standby.signal
-
-    # Start PostgreSQL service
-    systemctl start postgresql
-    EOF
 }
 
-# ========== EBS volume for Replica DB data ==========
 resource "aws_ebs_volume" "db_data_replica" {
   availability_zone = aws_instance.db_replica.availability_zone
   size              = var.db_data_volume_size
@@ -161,8 +114,8 @@ resource "aws_iam_policy" "ec2_postgres_backup_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          aws_s3_bucket.postgres_backups.arn,
-          "${aws_s3_bucket.postgres_backups.arn}/*"
+          var.postgres_backup_bucket_arn,
+          "${var.postgres_backup_bucket_arn}/*"
         ]
       }
     ]
@@ -193,7 +146,7 @@ resource "aws_iam_role" "backup_automation_role" {
     Statement = [{
       Effect = "Allow",
       Principal = {
-        AWS = "arn:aws:iam::YOUR_ACCOUNT_ID:root" # or your GitHub OIDC provider or Lambda ARN
+        AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" # or your GitHub OIDC provider or Lambda ARN
       },
       Action = "sts:AssumeRole"
     }]
@@ -216,8 +169,8 @@ resource "aws_iam_policy" "backup_automation_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          aws_s3_bucket.postgres_backups.arn,
-          "${aws_s3_bucket.postgres_backups.arn}/*"
+          var.postgres_backup_bucket_arn,
+          "${var.postgres_backup_bucket_arn}/*"
         ]
       }
     ]

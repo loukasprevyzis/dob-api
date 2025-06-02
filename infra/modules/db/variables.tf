@@ -23,7 +23,7 @@ variable "office_cidr" {
 variable "cluster_public_access_cidrs" {
   description = "List of CIDR blocks allowed to access the EKS cluster API server"
   type        = list(string)
-  default     = ["0.0.0.0/0"] # Change this to your office IP or restrict as needed
+  default     = ["0.0.0.0/0"]
 }
 
 variable "db_data_volume_size" {
@@ -58,10 +58,6 @@ variable "ec2_backup_role_name" {
   type        = string
 }
 
-variable "domain_name" {
-  description = "The Route53 hosted zone domain name, e.g., example.com"
-  type        = string
-}
 
 variable "private_subnet_ids" {
   type        = list(string)
@@ -86,32 +82,34 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "docker_image_tag" {
-  description = "Docker image tag to deploy"
-  type        = string
-  default     = "latest"
-}
-
-variable "docker_image_url" {
-  default = "123204938983.dkr.ecr.eu-west-1.amazonaws.com/dob-api"
-}
 variable "app_db_password" {
   type        = string
   description = "Database password for the application"
 }
 
-variable "public_subnet_id" {
+
+variable "sg_app_id" {
+  description = "Security Group ID for app"
   type        = string
-  description = "ID of the public subnet to use for the Instances"
-  
-}
-variable "ec2_private_key_pem" {
-  type        = string
-  description = "EC2 key pair PEM file content"
-  default     = ""
 }
 
-variable "route53_health_check_id" {
-  type = string
-  default = ""
+variable "ec2_private_key_pem" {
+  description = "EC2 private key in PEM format"
+  type        = string
+  
+}
+
+variable "public_subnet_id" {
+  type        = string
+  description = "Public subnet ID to launch the EC2 instances in"
+}
+
+variable "sg_db_id" {
+  description = "Security group ID for the DB instance"
+  type        = string
+}
+
+variable "postgres_backup_bucket_arn" {
+  description = "ARN of the S3 bucket for Postgres backups"
+  type        = string
 }

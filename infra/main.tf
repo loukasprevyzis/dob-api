@@ -1,140 +1,90 @@
-resource "aws_vpc" "primary" {
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "Primary-VPC-eu-west-1"
-  }
+module "s3" {
+  source = "./modules/s3"
+
+  cluster_name         = var.cluster_name
+  ec2_backup_role_name = var.ec2_backup_role_name
 }
 
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.primary.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "eu-west-1a"
-  map_public_ip_on_launch = true
-  tags = {
-    Name = "Public-Subnet-eu-west-1a"
-  }
+module "networking" {
+  source = "./modules/networking"
+
+  aws_region  = var.aws_region
+  office_cidr = "81.102.101.206/32" # for SSH
+
+  vpc_cidr_block = "10.0.0.0/16"
+  vpc_name       = "Primary-VPC-eu-west-1"
+
+  public_subnet_cidrs       = ["10.0.1.0/24", "10.0.4.0/24", "10.0.5.0/24"]
+  public_subnet_azs         = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+  public_subnet_id          = "10.0.1.0/24"
+
+  private_app_subnet_cidrs  = ["10.0.2.0/24"]
+  private_app_subnet_azs    = ["eu-west-1b"]
+
+  private_db_subnet_cidrs   = ["10.0.3.0/24"]
+  private_db_subnet_azs     = ["eu-west-1c"]
 }
 
-resource "aws_subnet" "private_app" {
-  vpc_id            = aws_vpc.primary.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-west-1b"
-  tags = {
-    Name = "Private-App-Subnet-eu-west-1b"
-  }
+module "r53" {
+  source = "./modules/r53"
+
+    domain_name          = var.domain_name
+  alb_zone_id          = module.networking.alb_zone_id
+
+  vpc_id               = module.networking.vpc_id
+  public_subnet_ids    = module.networking.public_subnet_ids
+  private_app_subnet_id = module.networking.private_app_subnet_ids[0]
+  security_group_app_id = module.networking.security_group_app_id
+  security_group_db_id  = module.networking.security_group_db_id
+  route53_health_check_id = var.route53_health_check_id
+  alb_dns_name = module.networking.alb_dns_name
 }
 
-resource "aws_subnet" "private_db" {
-  vpc_id            = aws_vpc.primary.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "eu-west-1c"
-  tags = {
-    Name = "Private-DB-Subnet-eu-west-1c"
-  }
+module "db" {
+  source = "./modules/db"
+
+  cluster_name         = var.cluster_name
+  ec2_ssh_key_name     = var.ec2_ssh_key_name
+  ec2_private_key_pem  = var.ec2_private_key_pem
+  db_data_volume_size  = var.db_data_volume_size
+  app_db_name          = var.app_db_name
+  app_db_user          = var.app_db_user
+  app_db_password      = var.app_db_password
+  ec2_backup_role_name = var.ec2_backup_role_name
+  aws_region           = var.aws_region
+  account_id           = var.account_id
+
+  vpc_id               = module.networking.vpc_id
+  private_subnet_ids  = module.networking.private_db_subnet_ids
+  public_subnet_id    = module.networking.public_subnet_ids[0]   
+  sg_app_id           = module.networking.security_group_app_id
+  sg_db_id = module.networking.security_group_db_id
+  postgres_backup_bucket_arn = module.s3.postgres_backups_arn
 }
 
-resource "aws_security_group" "sg_app" {
-  name        = "sg_app"
-  description = "Allow public HTTP access to App"
-  vpc_id      = aws_vpc.primary.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow public HTTP access
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "SG App"
-  }
+module "ecr" {
+  source = "./modules/ecr"
 }
 
-resource "aws_security_group" "sg_db" {
-  name        = "sg_db"
-  description = "Allow App to DB Postgres 5432"
-  vpc_id      = aws_vpc.primary.id
+module "ecs" {
+  source = "./modules/ecs"
 
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.sg_app.id]
-  }
+  docker_image_url     = var.docker_image_url
+  docker_image_tag     = var.docker_image_tag
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  primary_ip          = module.db.primary_private_ip
+  replica_ip          = module.db.replica_private_ip
+  ec2_backup_role_name = var.ec2_backup_role_name
 
-  tags = {
-    Name = "SG DB"
-  }
-}
+  aws_region          = var.aws_region
+  account_id          = var.account_id
 
-resource "aws_lb" "nlb" {
-  name               = "dob-api-nlb"
-  internal           = false
-  load_balancer_type = "network"
-  subnets            = [aws_subnet.public.id]
+  app_db_user         = var.app_db_user
+  app_db_password     = var.app_db_password
+  app_db_name         = var.app_db_name
 
-  tags = {
-    Name = "dob-api-nlb"
-  }
-}
-
-resource "aws_lb_target_group" "tg_app" {
-  name        = "dob-api-tg"
-  port        = 80
-  protocol    = "TCP"
-  vpc_id      = aws_vpc.primary.id
-  target_type = "ip"
-
-  health_check {
-    protocol            = "TCP"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 10
-    interval            = 30
-  }
-
-  tags = {
-    Name = "dob-api-tg"
-  }
-}
-
-resource "aws_lb_listener" "listener_http" {
-  load_balancer_arn = aws_lb.nlb.arn
-  port              = 80
-  protocol          = "TCP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.tg_app.arn
-  }
-}
-
-resource "aws_dynamodb_table" "terraform_lock" {
-  name         = "dob-api-terraform-lock"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Name        = "Terraform Lock Table"
-    Environment = "production"
-  }
+  private_subnet_ids  = module.networking.private_app_subnet_ids
+  sg_app_id           = module.networking.security_group_app_id
+  alb_target_group_arn = module.networking.alb_target_group_arn
+  alb_listener_arn     = module.networking.alb_listener_arn
 }
