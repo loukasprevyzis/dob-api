@@ -84,31 +84,70 @@ The setup now uses the native Debian/Ubuntu PostgreSQL cluster service `postgres
 ---
 
 ## ✅ Validation Checklist
+## Database and User Permissions Verification
 
-### On the Primary
+To verify that the application database and users are correctly configured with appropriate permissions, we ran the following query on the application database (`dob_api_db`):
+
+```sql
+SELECT
+  grantee AS role_name,
+  table_schema,
+  table_name,
+  string_agg(privilege_type, ', ') AS privileges
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public'
+GROUP BY grantee, table_schema, table_name
+ORDER BY grantee, table_name;
+```
+
+Result:
+
+![alt text](<Screenshot 2025-06-02 at 21.53.27.png>)
 
 
--- Check active replication connections
+### Replication Confimation
+
+#### On the Primary
+
+**Check active replication connections:**
 `SELECT pid, client_addr, state, sync_state FROM pg_stat_replication;`
-![alt text](image.png)
--- Check replication slot (if used)
-`SELECT * FROM pg_replication_slots;`
+
+![alt text](<Screenshot 2025-06-02 at 21.32.10.png>)
 
 ### On the Replica
 
--- Check WAL receiver status
+**Check WAL receiver status:**
 SELECT * FROM pg_stat_wal_receiver;
 
--- Check replication delay (lag)
+![alt text](<Screenshot 2025-06-02 at 21.29.36.png>)
+
+**Check replication delay (lag):**
 `SELECT now() - pg_last_xact_replay_timestamp() AS replication_delay;`
 
--- Confirm this is a standby server
+![alt text](<Screenshot 2025-06-02 at 21.33.14.png>)
+
+
+**Confirm this is a standby server:**
 `SELECT pg_is_in_recovery();`
 
--- Test data sync by querying an application table
+![alt text](<Screenshot 2025-06-02 at 21.34.17.png>)
+
+**Test data sync by querying an application table:**
+
 `SELECT * FROM users;`
 
----
+![alt text](<Screenshot 2025-06-02 at 21.44.28.png>)
+
+
+## NOTE: Replication Slots
+
+Replication slots are a PostgreSQL feature that ensures WAL files are retained on the primary until all connected replicas have received them, thereby preventing WAL loss during replication lag or network interruptions..
+
+In this setup, replication slots have not been employed to avoid the potential for disk space issues caused by slots that remain active when replicas disconnect or fall behind. The management of replication slots requires careful monitoring and cleanup to prevent excessive WAL accumulation..
+
+Instead, reliance has been placed on configuring `wal_keep_segments` to retain a sufficient number of WAL files for replicas. This approach is considered sufficient for the current use case.
+
+For production environments with higher reliability requirements, the implementation of replication slots alongside appropriate monitoring and alerting is recommended.
 
 ## 🔐 Deployment with SSH Private Keys and Pipeline Secrets
 
@@ -131,7 +170,7 @@ Ansible connects to target hosts over SSH using private keys for authentication.
 
 - **Best Practices:**
   - Use dedicated deployment SSH keys with limited access.
-  - Restrict SSH access and use host key verification. 
+  - Restrict SSH access and use host key verification.
   - Combine with Ansible Vault or external secrets management for added security.
 
 This approach ensures secure, seamless, and automated deployment using Ansible within your CI/CD pipelines.
