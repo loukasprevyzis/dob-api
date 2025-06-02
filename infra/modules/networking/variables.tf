@@ -51,5 +51,14 @@ variable "office_cidr" {
 variable "public_subnet_id" {
   type        = string
   description = "ID of the public subnet to use for the Instances"
-  
+}
+
+variable "dob_api_alb" {
+  type        = string
+  description = "ARN of the ALB for the application"
+}
+
+variable "dob_api_tg" {
+  type        = string
+  description = "ARN of the target group for the application"
 }

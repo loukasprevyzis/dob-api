@@ -1,59 +1,59 @@
 resource "aws_vpc" "primary" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr_block
 
   enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
-    Name = "Primary-VPC-eu-west-1"
+    Name = var.vpc_name
   }
 }
 
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.primary.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "eu-west-1a"
+  cidr_block              = var.public_subnet_cidrs[0]
+  availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
   tags = {
-    Name = "Public-Subnet-eu-west-1a"
+    Name = "Public-Subnet-${var.aws_region}a"
   }
 }
 
 resource "aws_subnet" "public_az2" {
   vpc_id                  = aws_vpc.primary.id
-  cidr_block              = "10.0.4.0/24"
-  availability_zone       = "eu-west-1b"
+  cidr_block              = var.public_subnet_cidrs[1]
+  availability_zone       = "${var.aws_region}b"
   map_public_ip_on_launch = true
   tags = {
-    Name = "Public-Subnet-eu-west-1b"
+    Name = "Public-Subnet-${var.aws_region}b"
   }
 }
 
 resource "aws_subnet" "public_az3" {
   vpc_id                  = aws_vpc.primary.id
-  cidr_block              = "10.0.5.0/24"
-  availability_zone       = "eu-west-1c"
+  cidr_block              = var.public_subnet_cidrs[2]
+  availability_zone       = "${var.aws_region}c"
   map_public_ip_on_launch = true
   tags = {
-    Name = "Public-Subnet-eu-west-1c"
+    Name = "Public-Subnet-${var.aws_region}c"
   }
 }
 
 resource "aws_subnet" "private_app" {
   vpc_id            = aws_vpc.primary.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-west-1b"
+  cidr_block        = var.private_app_subnet_cidrs[0]
+  availability_zone = "${var.aws_region}b"
   tags = {
-    Name = "Private-App-Subnet-eu-west-1b"
+    Name = "Private-App-Subnet-${var.aws_region}b"
   }
 }
 
 resource "aws_subnet" "private_db" {
   vpc_id            = aws_vpc.primary.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "eu-west-1c"
+  cidr_block        = var.private_db_subnet_cidrs[0]
+  availability_zone = "${var.aws_region}c"
   tags = {
-    Name = "Private-DB-Subnet-eu-west-1c"
+    Name = "Private-DB-Subnet-${var.aws_region}c"
   }
 }
 
@@ -121,7 +121,7 @@ resource "aws_route_table_association" "private_db_subnet_assoc" {
 # VPC Endpoint for S3 Gateway (allows S3 access without internet/NAT)
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.primary.id
-  service_name      = "com.amazonaws.eu-west-1.s3"
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
 
   route_table_ids = [
@@ -137,7 +137,7 @@ resource "aws_vpc_endpoint" "s3" {
 
 resource "aws_vpc_endpoint" "ecr_api" {
   vpc_id             = aws_vpc.primary.id
-  service_name       = "com.amazonaws.eu-west-1.ecr.api"
+  service_name       = "com.amazonaws.${var.aws_region}.ecr.api"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = [aws_subnet.private_app.id, aws_subnet.private_db.id]
   security_group_ids = [aws_security_group.sg_app.id]
@@ -150,7 +150,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
 
 resource "aws_vpc_endpoint" "ecr_dkr" {
   vpc_id             = aws_vpc.primary.id
-  service_name       = "com.amazonaws.eu-west-1.ecr.dkr"
+  service_name       = "com.amazonaws.${var.aws_region}.ecr.dkr"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = [aws_subnet.private_app.id, aws_subnet.private_db.id]
   security_group_ids = [aws_security_group.sg_app.id]
@@ -163,7 +163,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
 
 resource "aws_vpc_endpoint" "sts" {
   vpc_id             = aws_vpc.primary.id
-  service_name       = "com.amazonaws.eu-west-1.sts"
+  service_name       = "com.amazonaws.${var.aws_region}.sts"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = [aws_subnet.private_app.id, aws_subnet.private_db.id]
   security_group_ids = [aws_security_group.sg_app.id]
@@ -291,7 +291,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_alb_to_app" {
   description                  = "Allow traffic from ALB"
 }
 resource "aws_lb" "alb" {
-  name               = "dob-api-alb"
+  name               = var.dob_api_alb
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.sg_alb.id]
@@ -302,7 +302,7 @@ resource "aws_lb" "alb" {
 }
 
 resource "aws_lb_target_group" "tg_app" {
-  name        = "dob-api-tg"
+  name        = var.dob_api_tg
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.primary.id
@@ -373,7 +373,7 @@ resource "aws_route" "private_db_nat_route" {
 
 resource "aws_vpc_endpoint" "secretsmanager" {
   vpc_id              = aws_vpc.primary.id
-  service_name        = "com.amazonaws.eu-west-1.secretsmanager"
+  service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_app.id, aws_subnet.private_db.id]
   security_group_ids  = [aws_security_group.sg_app.id]
@@ -385,7 +385,7 @@ resource "aws_vpc_endpoint" "secretsmanager" {
 
 resource "aws_vpc_endpoint" "logs" {
   vpc_id              = aws_vpc.primary.id
-  service_name        = "com.amazonaws.eu-west-1.logs"
+  service_name        = "com.amazonaws.${var.aws_region}.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private_app.id, aws_subnet.private_db.id]
   security_group_ids  = [aws_security_group.sg_app.id]
@@ -395,7 +395,6 @@ resource "aws_vpc_endpoint" "logs" {
   }
 }
 
-# 3. Fix security group rules for app security group
 resource "aws_vpc_security_group_ingress_rule" "app_allow_https" {
   security_group_id = aws_security_group.sg_app.id
   description       = "Allow HTTPS for endpoint communication"

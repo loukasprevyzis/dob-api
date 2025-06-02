@@ -2,7 +2,7 @@
 
 # Create ECS cluster
 resource "aws_ecs_cluster" "dob_api" {
-  name = "dob-api-cluster"
+  name = var.ecs_cluster_name
 }
 
 # IAM role for ECS task execution

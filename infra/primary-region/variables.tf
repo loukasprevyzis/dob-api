@@ -1,8 +1,4 @@
-variable "cluster_name" {
-  description = "EKS cluster name"
-  type        = string
-  default     = "dob-api-eks-cluster"
-}
+
 
 variable "region" {
   description = "AWS Region"
@@ -21,7 +17,7 @@ variable "office_cidr" {
 }
 
 variable "cluster_public_access_cidrs" {
-  description = "List of CIDR blocks allowed to access the EKS cluster API server"
+  description = "List of CIDR blocks allowed to access the ECS cluster API server"
   type        = list(string)
   default     = ["0.0.0.0/0"] # Change this to your office IP or restrict as needed
 }
@@ -64,8 +60,7 @@ variable "domain_name" {
 }
 
 variable "private_subnet_ids" {
-  type        = list(string)
-  description = "Private subnet ID for the EKS application nodes"
+  type = list(string)
 }
 
 
@@ -103,7 +98,7 @@ variable "app_db_password" {
 variable "public_subnet_id" {
   type        = string
   description = "ID of the public subnet to use for the Instances"
-  
+
 }
 variable "ec2_private_key_pem" {
   type        = string
@@ -112,6 +107,6 @@ variable "ec2_private_key_pem" {
 }
 
 variable "route53_health_check_id" {
-  type = string
+  type    = string
   default = ""
 }

@@ -56,3 +56,9 @@ variable "alb_listener_arn" {
   type        = string
   description = "ARN of the ALB listener to attach ECS service"
 }
+
+variable "ecs_cluster_name" {
+  description = "Name of the ECS cluster"
+  type        = string
+  default     = "dob-api-cluster"
+}

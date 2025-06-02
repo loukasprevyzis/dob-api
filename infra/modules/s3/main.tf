@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "postgres_backups" {
-  bucket        = "${var.cluster_name}-postgres-backups"
+  bucket        = var.postgres_backups_bucket_name
   force_destroy = true
 
   tags = {
@@ -97,6 +97,36 @@ resource "aws_kms_key" "postgres_backup" {
             "kms:GrantIsForAWSResource" = "true"
           }
         }
+      },
+      {
+        Sid    = "Allow EC2 instance role to use the key"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/dob-api-ec2-postgres-role"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow DR EC2 instance role to use the key"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/dob-api-dr-ec2-postgres-role"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -146,7 +176,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
 
 ##### Terraform State S3 Bucket #####
 resource "aws_s3_bucket" "tf_state" {
-  bucket = "dob-api-terraform-state-s3"
+  bucket = var.terraform_state_bucket_name
 }
 
 resource "aws_s3_bucket_versioning" "tf_state_versioning" {
@@ -168,7 +198,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tf_state_sse" {
 }
 
 resource "aws_dynamodb_table" "terraform_lock" {
-  name         = "dob-api-terraform-lock"
+  name         = var.terraform_lock_table_name
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 

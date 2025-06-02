@@ -29,7 +29,7 @@ resource "aws_instance" "db_primary" {
   }
 
   tags = {
-    Name = "dob-api-db-primary"
+    Name = var.db_name_primary
   }
 }
 
@@ -64,7 +64,7 @@ resource "aws_instance" "db_replica" {
   }
 
   tags = {
-    Name = "dob-api-db-replica"
+    Name = var.db_name_replica
   }
 }
 
@@ -99,7 +99,7 @@ resource "aws_iam_role" "ec2_postgres_role" {
 }
 
 resource "aws_iam_policy" "ec2_postgres_backup_policy" {
-  name        = "${var.cluster_name}-ec2-postgres-backup-policy"
+  name        = var.ec2_postgres_backup_policy
   description = "Policy for EC2 instances to write backups to S3"
 
   policy = jsonencode({
@@ -127,19 +127,14 @@ resource "aws_iam_role_policy_attachment" "ec2_postgres_backup_attach" {
   policy_arn = aws_iam_policy.ec2_postgres_backup_policy.arn
 }
 
-# Attach this role to your EC2 instances in postgres.tf (add instance_profile)
 
 resource "aws_iam_instance_profile" "ec2_postgres_instance_profile" {
   name = "${var.cluster_name}-ec2-postgres-instance-profile"
   role = aws_iam_role.ec2_postgres_role.name
 }
 
-# -------- EKS Cluster Role (if not already fully defined) --------
-# (You already defined these in eks.tf, just check and update if needed)
-
-# -------- Backup Automation Role (e.g., for GitHub Actions or Lambda) --------
 resource "aws_iam_role" "backup_automation_role" {
-  name = "${var.cluster_name}-backup-automation-role"
+  name = var.backup_automation_role
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -154,7 +149,7 @@ resource "aws_iam_role" "backup_automation_role" {
 }
 
 resource "aws_iam_policy" "backup_automation_policy" {
-  name        = "${var.cluster_name}-backup-automation-policy"
+  name        = var.backup_automation_policy
   description = "Policy for backup automation to manage S3 backups"
 
   policy = jsonencode({

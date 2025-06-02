@@ -1,7 +1,5 @@
 variable "cluster_name" {
-  description = "EKS cluster name"
   type        = string
-  default     = "dob-api-eks-cluster"
 }
 
 variable "region" {
@@ -61,7 +59,6 @@ variable "ec2_backup_role_name" {
 
 variable "private_subnet_ids" {
   type        = list(string)
-  description = "Private subnet ID for the EKS application nodes"
 }
 
 
@@ -111,5 +108,32 @@ variable "sg_db_id" {
 
 variable "postgres_backup_bucket_arn" {
   description = "ARN of the S3 bucket for Postgres backups"
+  type        = string
+}
+
+variable "db_name_primary" {
+  description = "Primary database name"
+  type        = string
+  default     = "dob_api_db_primary"
+}
+
+variable "db_name_replica" {
+  description = "Replica database name"
+  type        = string
+  default     = "dob_api_db_replica"
+}
+
+variable "backup_automation_policy" {
+  description = "Name of the backup automation policy"
+  type        = string
+}
+
+variable "backup_automation_role" {
+  description = "IAM role for backup automation"
+  type        = string
+}
+
+variable "ec2_postgres_backup_policy" {
+  description = "IAM policy for EC2 Postgres backup"
   type        = string
 }
