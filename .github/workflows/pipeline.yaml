@@ -9,6 +9,8 @@ on:
 
 jobs:
   go-test:
+    runs-on: ubuntu-latest
+    steps:
       - name: Initialize go.sum
         run: |
           # Ensure go.sum exists
@@ -29,7 +31,7 @@ jobs:
       - name: Run Go Tests
         run: |
           go mod tidy
-          go test ./... -v -coverer
+          go test ./... -v -cover
 
   docker-build-push:
     name: Build and Push Docker Image to ECR
