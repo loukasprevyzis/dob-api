@@ -187,11 +187,11 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt \
             --check || true
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_failover \
             --vault-password-file vault_pass.txt \
             --check || true
@@ -235,10 +235,10 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt || true
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_failover \
             --vault-password-file vault_pass.txt || true
           rm vault_pass.txt
@@ -269,15 +269,15 @@ jobs:
           ssh-keyscan -H ${{ vars.FAILOVER_DB_HOST }} >> ~/.ssh/known_hosts
           ssh-keyscan -H ${{ vars.FAILOVER_REPLICA_DB_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Run Promote DR Playbook
+      - name: Run Promote DR Playbook & ECS Failover to DR Database
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
+          ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt || true
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
+          ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_failover \
             --vault-password-file vault_pass.txt || true
           rm vault_pass.txt
