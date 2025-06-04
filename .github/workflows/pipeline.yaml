@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Initialize go.sum
-        working-directory: dob-api
         run: |
+          cd dob-api
           if [ ! -f go.sum ]; then
             go mod download -x > /dev/null 2>&1 || true
           fi
