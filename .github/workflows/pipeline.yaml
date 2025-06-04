@@ -14,45 +14,120 @@ env:
   TF_VERSION: 1.5.7
   TF_WORKSPACE_PRIMARY: prod-primary
   TF_WORKSPACE_SECONDARY: prod-secondary
+  AWS_DEFAULT_REGION: eu-west-1
+  ECR_REPOSITORY: your-ecr-repo   # Change to your actual repo name
+  ANSIBLE_DIR: ./ansible           # Change to your ansible playbook path
 
 jobs:
-  terraform:
-    name: Terraform Plan & Apply
+  go-test:
+    name: Go Unit Tests
     runs-on: ubuntu-latest
-
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: eu-west-1
-
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+      - name: Prepare dependencies and run tests
+        working-directory: dob-api
+        run: |
+          go mod tidy
+          go test ./... -v -cover
 
+  build-and-push-ecr:
+    name: Build and Push Docker Image to ECR
+    runs-on: ubuntu-latest
+    needs: go-test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build Docker image
+        working-directory: dob-api
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: Push Docker image
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+
+  terraform-primary:
+    name: Terraform Plan/Apply (Primary Region)
+    runs-on: ubuntu-latest
+    needs: build-and-push-ecr
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Terraform Init
+      - name: Terraform Init (Primary)
+        working-directory: infra/primary-region
         run: terraform init
-        working-directory: infra
-
-      - name: Select Terraform Workspace
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            terraform workspace select $TF_WORKSPACE_PRIMARY || terraform workspace new $TF_WORKSPACE_PRIMARY
-          else
-            terraform workspace select $TF_WORKSPACE_SECONDARY || terraform workspace new $TF_WORKSPACE_SECONDARY
-          fi
-        working-directory: infra
-
-      - name: Terraform Plan
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
-        run: terraform plan -input=false -out=tfplan
-        working-directory: infra
-
-      - name: Terraform Apply
+      - name: Terraform Plan (Primary)
+        if: github.event_name == 'pull_request'
+        working-directory: infra/primary-region
+        run: terraform plan -env-file=env.tfvars -input=false -out=tfplan
+      - name: Terraform Apply (Primary)
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -input=false -auto-approve tfplan
-        working-directory: infra
+        working-directory: infra/primary-region
+        run: terraform apply -env-file=env.tfvars -input=false -auto-approve tfplan
+
+  terraform-failover:
+    name: Terraform Plan/Apply (Failover Region)
+    runs-on: ubuntu-latest
+    needs: build-and-push-ecr
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Terraform Init (Failover)
+        working-directory: infra/failover-region
+        run: terraform init -env-file=env.tfvars
+      - name: Terraform Plan (Failover)
+        if: github.event_name == 'pull_request'
+        working-directory: infra/failover-region
+        run: terraform plan -env-file=env.tfvars -input=false -out=tfplan
+      - name: Terraform Apply (Failover)
+        if: github.ref == 'refs/heads/main'
+        working-directory: infra/failover-region
+        run: terraform apply -env-file=env.tfvars -input=false -auto-approve tfplan
+
+  ansible-deploy:
+    name: Ansible Deploy
+    runs-on: ubuntu-latest
+    needs: [terraform-primary, terraform-failover]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Ansible and AWS Collection
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip sshpass
+          pip3 install ansible
+          ansible-galaxy collection install amazon.aws
+      - name: Run Ansible Playbook with Vault
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        run: |
+          echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --vault-password-file vault_pass.txt
+          rm vault_pass.txt

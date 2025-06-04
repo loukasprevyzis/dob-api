@@ -33,3 +33,19 @@
   become: true
   roles:
     - { role: postgres, tasks_from: db-backup.yml }
+
+- name: Setup PostgreSQL monitoring (Primary Region DBs)
+  hosts:
+    - postgres_primary
+    - postgres_replicas
+  become: true
+  roles:
+    - { role: postgres, tasks_from: monitoring.yml }
+
+- name: Setup PostgreSQL monitoring (DR Region DBs)
+  hosts:
+    - postgres_primary_dr
+    - postgres_replicas_dr
+  become: yes
+  roles:
+    - { role: postgres, tasks_from: monitoring.yml }

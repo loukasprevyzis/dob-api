@@ -1,0 +1,15 @@
+
+- name: Promote DR standby to primary
+  hosts: postgres_primary_dr
+  become: yes
+  roles:
+    - { role: postgres, tasks_from: promote-dr.yml }
+
+- name: Update ECS service to point to DR DB host
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    aws_region: eu-west-1
+  roles:
+    - { role: dr-failover, tasks_from: update-ecs.yml }

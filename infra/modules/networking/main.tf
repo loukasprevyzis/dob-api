@@ -212,6 +212,17 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   description       = "Allow SSH from my public IP"
 }
 
+# TEMP: Open PostgreSQL access to all for cross-region failover testing
+# NOTE: Tighten this down before production (use VPC CIDR or IP allowlist)
+resource "aws_vpc_security_group_ingress_rule" "allow_cross_region_db_access" {
+  security_group_id = aws_security_group.sg_db.id
+  from_port         = 5432
+  to_port           = 5432
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "TEMP: Allow cross-region DB access for testing"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "allow_app_to_db" {
   security_group_id            = aws_security_group.sg_db.id
   from_port                    = 5432

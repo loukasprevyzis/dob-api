@@ -1,0 +1,29 @@
+- name: Remove standby.signal to trigger promotion
+  file:
+    path: /var/lib/postgresql/12/main/standby.signal
+    state: absent
+
+- name: Run pg_ctl promote
+  command: pg_ctl -D /var/lib/postgresql/12/main promote
+  register: promote_result
+  failed_when: "'server promoted' not in promote_result.stdout"
+
+- name: Wait for promotion to complete
+  wait_for:
+    port: 5432
+    delay: 5
+    timeout: 30
+
+- name: Verify instance is primary now
+  become_user: postgres
+  shell: psql -tAc "SELECT NOT pg_is_in_recovery();"
+  register: is_primary
+
+- name: Fail if promotion failed
+  fail:
+    msg: "Promotion to primary failed"
+  when: is_primary.stdout.strip() != 't'
+
+- name: Show success message
+  debug:
+    msg: "DR replica promoted successfully to primary"

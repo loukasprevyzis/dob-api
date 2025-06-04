@@ -92,6 +92,7 @@
     owner: postgres
     group: postgres
 
+
 - name: Schedule daily base backup cron job
   become: yes
   cron:
@@ -100,6 +101,24 @@
     minute: 0
     hour: 2
     job: "/usr/local/bin/pg_basebackup.sh >> /var/log/pg_basebackup.log 2>&1"
+
+- name: Deploy restore script to retrieve latest base backup from S3
+  become: yes
+  copy:
+    dest: /usr/local/bin/restore_from_s3.sh
+    mode: '0755'
+    content: |
+      #!/bin/bash
+      RESTORE_DIR=/var/lib/postgresql/restore_data
+      S3_BUCKET={{ s3_bucket_map[inventory_hostname] }}
+      LATEST_BACKUP=$(aws s3 ls s3://$S3_BUCKET/base_backups/ | sort | tail -n 1 | awk '{print $2}' | sed 's#/##')
+
+      mkdir -p $RESTORE_DIR
+      aws s3 sync s3://$S3_BUCKET/base_backups/$LATEST_BACKUP $RESTORE_DIR
+      touch $RESTORE_DIR/standby.signal
+
+      chown -R postgres:postgres $RESTORE_DIR
+      chmod 700 $RESTORE_DIR
 
 - name: Get postgres user's crontab
   become: yes

@@ -1,0 +1,38 @@
+groups:
+  - name: postgres_alerts
+    rules:
+      - alert: PostgresPrimaryDown
+        expr: up{job="postgresql", instance="{{ primary_private_ip }}:9187"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL primary server down"
+          description: "The primary PostgreSQL server at {{ primary_private_ip }} is unreachable."
+
+      - alert: PostgresReplicaDown
+        expr: up{job="postgresql", instance=~"{{ replica_private_ip }}:9187|{{ replica_dr_private_ip }}:9187"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL replica server down"
+          description: "One or more PostgreSQL replicas are unreachable."
+
+      - alert: PostgresPrimaryAndReplicaDown
+        expr: up{job="postgresql", instance=~"{{ primary_private_ip }}:9187|{{ replica_private_ip }}:9187"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Both primary and main replica are down"
+          description: "The primary and main replica PostgreSQL instances are unreachable. DR promotion may be required."
+
+      - alert: PostgresReplicationLagHigh
+        expr: pg_stat_replication_lag_seconds > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High replication lag on PostgreSQL replica"
+          description: "Replication lag is above 10 seconds."

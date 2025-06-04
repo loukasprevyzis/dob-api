@@ -1,11 +1,11 @@
 module "s3" {
   source = "../modules/s3"
 
-  cluster_name                    = "dob-api"
-  ec2_backup_role_name            = var.ec2_backup_role_name
-  postgres_backups_bucket_name    = "dob-api-postgres-backups"
-  terraform_state_bucket_name     = "dob-api-terraform-state-s3"
-  terraform_lock_table_name       = "dob-api-terraform-lock"
+  cluster_name                 = "dob-api"
+  ec2_backup_role_name         = var.ec2_backup_role_name
+  postgres_backups_bucket_name = "dob-api-postgres-backups"
+  terraform_state_bucket_name  = "dob-api-terraform-state-s3"
+  terraform_lock_table_name    = "dob-api-terraform-lock"
 }
 
 module "networking" {
@@ -61,15 +61,15 @@ module "db" {
   aws_region           = var.aws_region
   account_id           = var.account_id
 
-  vpc_id                        = module.networking.vpc_id
-  private_subnet_ids            = module.networking.private_db_subnet_ids
-  public_subnet_id              = module.networking.public_subnet_ids[0]
-  sg_app_id                     = module.networking.security_group_app_id
-  sg_db_id                      = module.networking.security_group_db_id
-  postgres_backup_bucket_arn    = module.s3.postgres_backups_arn
-  backup_automation_policy      = "dob-api-backup-automation-policy"
-  backup_automation_role        = "dob-api-backup-automation-role"
-  ec2_postgres_backup_policy    = "dob-api-ec2-postgres-backup-policy"
+  vpc_id                     = module.networking.vpc_id
+  private_subnet_ids         = module.networking.private_db_subnet_ids
+  public_subnet_id           = module.networking.public_subnet_ids[0]
+  sg_app_id                  = module.networking.security_group_app_id
+  sg_db_id                   = module.networking.security_group_db_id
+  postgres_backup_bucket_arn = module.s3.postgres_backups_arn
+  backup_automation_policy   = "dob-api-backup-automation-policy"
+  backup_automation_role     = "dob-api-backup-automation-role"
+  ec2_postgres_backup_policy = "dob-api-ec2-postgres-backup-policy"
 }
 
 module "ecr" {

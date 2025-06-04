@@ -25,7 +25,8 @@ Implement a highly available, disaster-resilient "Hello World" API service with:
 
 - Automated CI/CD pipelines for:
   - Build, test, and deployment of Go service.
-  - Infrastructure provisioning using Terraform.
+  - Infrastructure provisioning using Terraform (Primary and Failover Disaster Recovery Region)
+  - Ansible - To configure PostgreSQL, PostgreSQL replication & automated backups pushed to S3 (Both Prmary and Disaster Recovery regions)
   - No-downtime production deployment strategy.
 
 - A clear **system architecture diagram** illustrating deployment in AWS/GCP.
@@ -40,12 +41,10 @@ For this assignment, I kept the Terraform flat without modules to focus on corre
 
 - Developed in Go.
 - Validates inputs and interacts with PostgreSQL.
-- Stateless, deployed in Kubernetes cluster (EKS or GKE).
-- Exposed via Network Load Balancer (NLB).
+- Deployed in ECS (Elastic Container Service)
+- Exposed via Application Load Balancer (ALB).
 
 ### PostgreSQL Cluster
-
-
 
 - Primary in one AZ/region with dedicated EBS volume.
 - Replica in different AZ or region using async streaming replication.
@@ -57,20 +56,20 @@ For this assignment, I kept the Terraform flat without modules to focus on corre
 
 For this project, EC2 instances are deployed in **public subnets with public IPs** to enable direct SSH and application access from my local machine. This decision was made to:
 
-- **Simplify testing and debugging** during development and demo phases.
-- Avoid additional complexity from VPNs, bastion hosts, or private networking during the initial setup.
+- **Simplify testing and debugging** during development and demo.
 - Speed up iteration and validation of infrastructure and application deployments.
 
----
+
 
 ### Production Considerations
 
-In a production environment, I would implement:
+In a real world production environment the following would be implemented:
 
 - Deployment into **private subnets** without public IPs.
-- Access via **bastion hosts** or **AWS Systems Manager Session Manager** for secure connectivity.
+- Access via **bastion hosts** , **AWS Systems Manager Session Manager**  or **VPN (e.g AWS VPN Client)* for secure connectivity.
 - Proper **security group and network ACL configurations** to restrict access.
-- Use of **VPNs or Direct Connect** for secure corporate connectivity.
+
+“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”
 
 This approach balances practical testing needs with a clear understanding of enterprise-grade network security best practices.
 
@@ -80,61 +79,34 @@ This approach balances practical testing needs with a clear understanding of ent
 - Provisions R53 configuration with a new hosted zone using a purchased pre-existing domain name.
 - User data scripts configure PostgreSQL on EC2, set up replication with two multi AZ ec2 psql clusters.
 - Deploys a secondary region in eu-central-1 for DB disaster recovery failover.
-- GitHub Actions for CI/CD pipeline:  
-  - Runs unit tests locally.  
-  - Builds and publishes Docker images.  
+- GitHub Actions for CI/CD pipeline:
+  - Runs unit tests locally.
+  - Builds and publishes Docker images.
   - Deploys to Kubernetes with rolling update strategy.
 - Backup and restore jobs triggered via GitHub Actions.
 
 ---
 
-## ✅ Validation & Testing for Postgresql D. 
-
-After infrastructure deployment, confirm system functionality with for the primary/replica multi AZ DBs:
-- PostgreSQL user/database/table creation is handled dynamically by the Go application on startup via environment-based connection config and schema init logic.
-- Database Tests:
-  - On primary, check replication slots and active replicas.
-    ```bash
-    sudo -u postgres psql -c "SELECT slot_name, active FROM pg_replication_slots;"
-    sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
-    ```
-  - On replica, verify WAL streaming is active.  
-    ```bash
-    sudo -u postgres psql -c "SELECT * FROM pg_stat_wal_receiver;"
-    ```
-  - Confirm `pg_is_in_recovery()` is `false` on primary, `true` on replica.
-- Connectivity:
-  - From replica, test connection to primary with replication user.
-- Failover:
-  - Test manual failover by stopping primary and verifying replica promotion.
-- Backup:
-  - Validate automated backup files in S3.
-  - Run restore job to test recovery in failover region.
-
-- API Tests:
-  - Validate PUT `/hello/<username>` stores DOB.
-  - Validate GET `/hello/<username>` returns correct birthday message.
 
 
 ---
 
 ## 🗂️ System Diagram
 
-*See `diagram.drawio` and exported `.jpeg` in this repo illustrating the multi-region, multi-AZ architecture with replication, backups, and API flow.*
+![alt text](revolut.drawio.png)
 
----
+This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
+To clarify: 
+- In the code's setup there is no R53 DNS and no failover routing policy for it. However in the diagram, it is suggested that this would be deployed in a production environment. 
+- The EC2 instances for the Databases should be deployed in a private subnet, however in code, they were deployed in public subnets so they can be accessed for local testing and DB Failover between regions. In a real world production environment, bastion hosts or VPN (e.g. AWS VPN Client would be configured and deployed)
+- In addition, the diagram shows VPC Peering similarly, this was not deployed for cost saving and local testing simplicity - In a real world production environment either VPC Peering or Transit Gateway would be configured and deployed - **More information around that can be found in the `ansible` directory `README.md`
 
 ## 🚀 How to Run Locally
 
-1. Start local PostgreSQL instance.
-2. Run unit tests:
-   ```bash
-   go test ./...
-   ```
-3. Use provided Dockerfile to build image.
-4. Run API container locally and test API endpoints.
+- For Ansible: see `README.md` in `ansible` directory - **ALSO EXTENSIVE EXPLANATIONS OF REGION FAILOVER AND DECISIONS AROUND PROCESS FOR THE PURPOSE OF THIS PROJECT**
+- For Terraform: see `README.md` in `infra` directory
+- For Golang Application: see README..md in `dob-api` directory
 
----
 
 ## 📦 Deployment
 
@@ -146,9 +118,9 @@ After infrastructure deployment, confirm system functionality with for the prima
 
 ## 🔐 Security
 
-- No secrets or credentials stored in the repo; managed via Terraform variables and CI secrets.
+- Any secrets exposed are for testing purposes only - in a real production scenario, Secrets Management would be enforce (Secrets Manager, Hashicorp Vault, Ansible Vault)
 - Secure SSH access limited to specific IP.
-- Internal security groups allow necessary communication only.
+- Some security group rules are non-restrictive for testing purposes only from my local machine.
 
 ---
 

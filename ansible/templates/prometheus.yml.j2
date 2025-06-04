@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'postgresql'
+    honor_labels: true
+    static_configs:
+      - targets:
+{% for target in prometheus_scrape_targets %}
+          - '{{ target }}'
+{% endfor %}
+
+rule_files:
+  - /etc/prometheus/alerts.yml

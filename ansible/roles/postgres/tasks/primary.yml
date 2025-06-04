@@ -1,3 +1,27 @@
+- name: Ensure 'acl' package is installed for permission management
+  apt:
+    name: acl
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Install Python dependencies for PostgreSQL modules
+  become: yes
+  apt:
+    name:
+      - python3-psycopg2
+      - python3-pip
+      - libpq-dev
+      - python3-dev
+    state: present
+    update_cache: yes
+
+- name: Install psycopg2 Python package via pip
+  become: yes
+  pip:
+    name: psycopg2-binary
+    executable: pip3
+
 - name: Install PostgreSQL packages
   apt:
     name:
@@ -29,7 +53,7 @@
 
 - name: Create mount point directory
   file:
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/12/main
     state: directory
     owner: postgres
     group: postgres
@@ -38,47 +62,57 @@
 
 - name: Mount block device
   mount:
-    path: /var/lib/postgresql/data
+    path: /var/lib/postgresql/12/main
     src: /dev/nvme1n1
     fstype: ext4
     opts: defaults,nofail
     state: mounted
+  become: yes
 
-- name: Ensure PGDATA and parent directory owned by postgres recursively
+- name: Ensure data directory owned by postgres recursively
   file:
-    path: /var/lib/postgresql/data
-    state: directory
+    path: /var/lib/postgresql/12/main
+    recurse: yes
     owner: postgres
     group: postgres
-    recurse: yes
     mode: '0700'
   become: yes
 
-- name: Stop PostgreSQL service
+- name: Check if PostgreSQL cluster is initialized
+  stat:
+    path: /var/lib/postgresql/12/main/PG_VERSION
+  register: pg_data_version
+
+- name: Stop PostgreSQL service if cluster not initialized
   service:
-    name: postgresql
+    name: postgresql@12-main
     state: stopped
   become: yes
+  when: not pg_data_version.stat.exists
 
-- name: Remove existing PGDATA directory if exists (for fresh initdb)
-  file:
-    path: /var/lib/postgresql/data/pgdata
-    state: absent
+- name: Clean data directory only if cluster uninitialized
+  shell: "rm -rf /var/lib/postgresql/12/main/* /var/lib/postgresql/12/main/.* 2>/dev/null || true"
   become: yes
+  when: not pg_data_version.stat.exists
 
 - name: Initialize database cluster if missing
-  command: /usr/lib/postgresql/12/bin/initdb -D /var/lib/postgresql/data/pgdata
+  command: /usr/lib/postgresql/12/bin/initdb -D /var/lib/postgresql/12/main
   args:
-    creates: /var/lib/postgresql/data/pgdata/PG_VERSION
+    creates: /var/lib/postgresql/12/main/PG_VERSION
   become: yes
   become_user: postgres
 
+- name: Start PostgreSQL service
+  service:
+    name: postgresql@12-main
+    state: started
+  become: yes
 
-- name: Ensure local postgres user uses md5 authentication
+- name: Ensure local postgres user uses peer authentication
   lineinfile:
     path: /etc/postgresql/12/main/pg_hba.conf
     regexp: '^local\s+all\s+postgres\s+'
-    line: 'local all postgres md5'
+    line: 'local all postgres peer'
     state: present
   become: yes
 
@@ -114,7 +148,7 @@
 
 - name: Restart PostgreSQL to apply pg_hba.conf changes
   service:
-    name: postgresql
+    name: postgresql@12-main
     state: restarted
   become: yes
 
@@ -122,13 +156,14 @@
   wait_for:
     port: 5432
     delay: 2
-    timeout: 30
+    timeout: 60
 
 - name: Set password for postgres user using SQL via local command
   shell: |
     sudo -u postgres psql -d postgres -c "ALTER USER postgres WITH PASSWORD '{{ postgres_password }}';"
   args:
     executable: /bin/bash
+  become: yes
 
 - name: Create replication role if missing
   become: true

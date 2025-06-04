@@ -1,0 +1,87 @@
+{
+  "family": "dob-api-task",
+  "containerDefinitions": [
+    {
+      "name": "dob-api",
+      "image": "123204938983.dkr.ecr.eu-west-1.amazonaws.com/dob-api:latest",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "AWS_REGION",
+          "value": "eu-west-1"
+        },
+        {
+          "name": "DB_PRIMARY_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_BACKUP_ROLE_NAME",
+          "value": "dob-api-ec2-backup-role"
+        },
+        {
+          "name": "DB_REPLICA_HOST",
+          "value": "10.0.1.237"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "dob_api_user"
+        },
+        {
+          "name": "AWS_ACCOUNT_ID",
+          "value": "123204938983"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "dob_api_db"
+        },
+        {
+          "name": "DB_REPLICA_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_PRIMARY_HOST",
+          "value": "10.0.1.126"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "value": "TkmP8qLox6sCy3o"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "10.1.1.145"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/dob-api",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "dob-api"
+        }
+      },
+      "systemControls": []
+    }
+  ],
+  "volumes": [],
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::123204938983:role/ecsTaskExecutionRole"
+}
