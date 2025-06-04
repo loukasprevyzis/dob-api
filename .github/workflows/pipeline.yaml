@@ -16,6 +16,7 @@ jobs:
 
       - name: Cache Go modules
         uses: actions/cache@v3
+        working-directory: dob-api
         with:
           path: |
             ~/go/pkg/mod
@@ -46,7 +47,7 @@ jobs:
           aws-access-key-id: ${{ vars.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-      - uses: aws-actions/amazon-ecr-login@v1
+      - uses: aws-actions/amazon-ecr-login@v2
         id: login-ecr
       - name: Build and Push Docker Image
         working-directory: dob-api
