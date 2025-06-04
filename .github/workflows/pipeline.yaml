@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Initialize go.sum
-        working-directory: dob-api
+        working-directory: .
         run: |
-          # Ensure go.sum exists
-          if [ ! -f go.sum ]; then
+          if [ ! -f dob-api/go.sum ]; then
+            cd dob-api
             go mod download -x > /dev/null 2>&1 || true
           fi
 
@@ -30,8 +30,8 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run Go Tests
-        working-directory: dob-api
         run: |
+          cd dob-api
           go mod tidy
           go test ./... -v -cover
 
