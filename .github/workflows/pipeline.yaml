@@ -28,9 +28,10 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run Go Tests
+        working-directory: dob-api
         run: |
           go mod tidy
-          go test ./... -v -cover
+          go test $(go list ./...) -v -cover
 
   docker-build-push:
     name: Build and Push Docker Image to ECR
