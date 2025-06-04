@@ -16,11 +16,10 @@ jobs:
 
       - name: Cache Go modules
         uses: actions/cache@v3
-        working-directory: dob-api
         with:
           path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
+            dob-api/pkg/mod
+            dob-api/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
