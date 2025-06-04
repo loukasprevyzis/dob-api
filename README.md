@@ -93,7 +93,7 @@ In a real world production environment the following would be implemented:
 This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
 To clarify:
 - In the code's setup there is no R53 DNS and no failover routing policy for it. However in the diagram, it is suggested that this would be deployed in a production environment.
-- The EC2 instances for the Databases should be deployed in a private subnet, however in code, they were deployed in public subnets so they can be accessed for local testing and DB Failover between regions. In a real world production environment, bastion hosts or VPN (e.g. AWS VPN Client would be configured and deployed)
+- The EC2 instances for the Databases should be deployed in a private subnet, however in code, they were deployed in public subnets so they can be accessed via their Public IPs for local testing and DB Failover between regions. In a real world production environment, bastion hosts or VPN (e.g. AWS VPN Client would be configured and deployed)
 - In addition, the diagram shows VPC Peering similarly, this was not deployed for cost saving and local testing simplicity - In a real world production environment either VPC Peering or Transit Gateway would be configured and deployed - **More information around that can be found in the `ansible` directory `README.md`
 
 ## 🚀 How to Run Locally
