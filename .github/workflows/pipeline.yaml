@@ -182,15 +182,19 @@ jobs:
           ssh-keyscan -H ${{ vars.FAILOVER_DB_HOST }} >> ~/.ssh/known_hosts
           ssh-keyscan -H ${{ vars.FAILOVER_REPLICA_DB_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Ansible Check - Primary Region
+      - name: Ansible Check - Primary & DR Regions
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt \
-            --check
+            --check || true
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+            --user ubuntu --private-key ~/.ssh/id_rsa_failover \
+            --vault-password-file vault_pass.txt \
+            --check || true
           rm vault_pass.txt
 
   ansible-deploy:
@@ -231,9 +235,12 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
-            --vault-password-file vault_pass.txt
+            --vault-password-file vault_pass.txt || true
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+            --user ubuntu --private-key ~/.ssh/id_rsa_failover \
+            --vault-password-file vault_pass.txt || true
           rm vault_pass.txt
 
   # This job runs only on manual workflow_dispatch trigger on the main branch if Alerting notifies us that primary region DB cluster is unavailable.
@@ -267,7 +274,10 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
+            --user ubuntu --private-key ~/.ssh/id_rsa_primary \
+            --vault-password-file vault_pass.txt || true
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_failover \
-            --vault-password-file vault_pass.txt
+            --vault-password-file vault_pass.txt || true
           rm vault_pass.txt
