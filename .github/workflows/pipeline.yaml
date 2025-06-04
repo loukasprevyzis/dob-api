@@ -121,7 +121,6 @@ jobs:
   terraform-apply-failover:
     needs:
       - docker-build-push
-      - terraform-plan-primary
       - terraform-apply-primary
     name: Terraform Apply - Failover
     runs-on: ubuntu-latest
