@@ -224,3 +224,39 @@ jobs:
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt
           rm vault_pass.txt
+
+  # This job runs only on manual workflow_dispatch trigger on the main branch if Alerting notifies us that primary region DB cluster is unavailable.
+  # It promotes DB failover and ECS failover to use the new primary DB region.
+  ansible-promote-dr:
+    name: Ansible Promote DR (Failover to Primary DB)
+    runs-on: ubuntu-latest
+    needs: [terraform-apply-primary, terraform-apply-failover]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Ansible and AWS Collection
+        run: |
+          sudo apt-get update && sudo apt-get install -y python3-pip sshpass
+          pip3 install ansible
+          ansible-galaxy collection install amazon.aws
+
+      - name: Setup SSH Key for Failover Region
+        env:
+          SSH_PRIVATE_KEY_FAILOVER: ${{ secrets.SSH_PRIVATE_KEY_FAILOVER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY_FAILOVER" > ~/.ssh/id_rsa_failover
+          chmod 600 ~/.ssh/id_rsa_failover
+          ssh-keyscan -H ${{ vars.FAILOVER_DB_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ vars.FAILOVER_REPLICA_DB_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Run Promote DR Playbook
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        run: |
+          echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
+          ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
+            --user ubuntu --private-key ~/.ssh/id_rsa_failover \
+            --vault-password-file vault_pass.txt
+          rm vault_pass.txt

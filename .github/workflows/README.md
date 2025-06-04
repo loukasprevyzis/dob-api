@@ -16,6 +16,7 @@ This repository contains the CI/CD pipeline for the **dob-api** Go application, 
   - Build and push Docker image to AWS ECR
   - Terraform apply for primary and failover regions
   - Ansible deployment with vault secrets
+  - **Manual promotion for DB region failover and ECS failover using Ansible**
 
 ---
 
@@ -47,6 +48,7 @@ This repository contains the CI/CD pipeline for the **dob-api** Go application, 
 
 - **ansible-plan**: Runs in check mode on PRs to validate playbook.
 - **ansible-deploy**: Runs on manual trigger (`workflow_dispatch`) on `main` to deploy playbook using vault and SSH keys.
+- **ansible-promote-dr**: Runs only on manual trigger (`workflow_dispatch`) on `main` to perform DB region failover promotion and ECS failover to the new primary DB region.
 
 ---
 
@@ -90,11 +92,19 @@ This pipeline runs on pushes to `main` and manual triggers to deploy infrastruct
 
 ![Main Pipeline Run Screenshot](./docs/main-pipeline-run.png)
 
+---
+
+### Manual Promote DR Job
+
+This manual job runs only when triggered from the GitHub Actions UI on the `main` branch. It promotes database failover to the primary region and updates ECS services accordingly, using the Ansible playbook `promote-dr-playbook.yml`.
+
+---
 
 ## Usage
 
 - Push or open a PR to `main` or `develop` to run tests and plans.
 - Manually trigger the workflow on the `main` branch to deploy infrastructure and application.
+- Manually trigger the **Promote DR** job on `main` to execute failover promotion.
 
 ---
 
