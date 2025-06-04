@@ -1,6 +1,6 @@
 ## Testing
 
-The tests in `dob-api/main_test.go` cover the following behaviors of the `helloHandler` in `main.go`:
+The tests in `dob-api/internal/api/handlet_test.go` cover the following behaviors of the `helloHandler` in `main.go`:
 
 - **PUT /hello/<username>**
   - Saves a new user's date of birth (DOB) to the database.
