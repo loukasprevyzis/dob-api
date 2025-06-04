@@ -66,7 +66,6 @@ pip3 install boto3 botocore
 - `postgres_password`: password for the default `postgres` user
 - `replication_password`: password for the `replica` user
 - `app_password`: password for the application user
-- `replication_slot` (optional): slot name to retain WAL files for replica
 
 ---
 
