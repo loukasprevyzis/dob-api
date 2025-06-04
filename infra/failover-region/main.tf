@@ -78,27 +78,3 @@ module "db" {
 module "ecr" {
   source = "../modules/ecr"
 }
-
-module "ecs" {
-  source = "../modules/ecs"
-
-  ecs_cluster_name = "dob-api-cluster-${local.name_suffix}"
-  docker_image_url = var.docker_image_url
-  docker_image_tag = var.docker_image_tag
-
-  primary_ip           = module.db.primary_private_ip
-  replica_ip           = module.db.replica_private_ip
-  ec2_backup_role_name = var.ec2_backup_role_name
-
-  aws_region = var.aws_region
-  account_id = var.account_id
-
-  app_db_user     = var.app_db_user
-  app_db_password = var.app_db_password
-  app_db_name     = var.app_db_name
-
-  private_subnet_ids   = module.networking.private_app_subnet_ids
-  sg_app_id            = module.networking.security_group_app_id
-  alb_target_group_arn = module.networking.alb_target_group_arn
-  alb_listener_arn     = module.networking.alb_listener_arn
-}
