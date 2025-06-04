@@ -176,7 +176,7 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ansible-playbook -i ./ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt \
             --check
@@ -220,7 +220,7 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+          ansible-playbook -i ./ansible/inventory.ini ansible/playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_primary \
             --vault-password-file vault_pass.txt
           rm vault_pass.txt
@@ -256,7 +256,7 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-          ansible-playbook -i ansible/inventory.ini ansible/promote-dr-playbook.yml \
+          ansible-playbook -i ./ansible/inventory.ini ansible/promote-dr-playbook.yml \
             --user ubuntu --private-key ~/.ssh/id_rsa_failover \
             --vault-password-file vault_pass.txt
           rm vault_pass.txt

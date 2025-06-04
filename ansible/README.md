@@ -255,7 +255,7 @@ Script runs every night at 2 am and pushes backups to the respective S3 buckets 
 
 ![alt text](<Screenshot 2025-06-03 at 00.18.28.png>)
 
-# Monitoring & Alerting Setup 
+# Monitoring & Alerting Setup
 
 The setup in `tasks/monitoring.yml` installs and configures:
 
@@ -268,26 +268,26 @@ The setup in `tasks/monitoring.yml` installs and configures:
 
 ## Components
 
-- **Postgres Exporter** 
-  Installed as a systemd service under user `{{ prometheus_user }}`.  
+- **Postgres Exporter**
+  Installed as a systemd service under user `{{ prometheus_user }}`.
   Metrics exposed on port `9187`.
 
-- **Prometheus**  
-  Runs as a systemd service scraping metrics every 15 seconds.  
-  Configuration file location: `/etc/prometheus/prometheus.yml`.  
+- **Prometheus**
+  Runs as a systemd service scraping metrics every 15 seconds.
+  Configuration file location: `/etc/prometheus/prometheus.yml`.
   Alert rules stored in `/etc/prometheus/alerts.yml`.
 
-- **Alertmanager**  
-  Runs as a systemd service and sends alert emails using SMTP credentials configured.  
+- **Alertmanager**
+  Runs as a systemd service and sends alert emails using SMTP credentials configured.
   Config located at `/etc/alertmanager/alertmanager.yml`.
 
 ## Prometheus Scrape Targets
 
 Configured in `templates/prometheus.yml.j2`:
 
-- Primary region primary DB: `{{ primary_private_ip }}:9187`  
-- Primary region replica DB: `{{ replica_private_ip }}:9187`  
-- DR region primary DB: `{{ primary_dr_private_ip }}:9187`  
+- Primary region primary DB: `{{ primary_private_ip }}:9187`
+- Primary region replica DB: `{{ replica_private_ip }}:9187`
+- DR region primary DB: `{{ primary_dr_private_ip }}:9187`
 - DR region replica DB: `{{ replica_dr_private_ip }}:9187`
 
 ## Alerts Defined
@@ -316,8 +316,8 @@ Configured in `templates/alerts.yml.j2`:
 
 ### Disaster Recover Region Failover
 
-- The DR replica runs **asynchronous streaming replication** from the primary region.  
-- Failover is performed by **promoting the DR standby replica** to primary, which involves:  
+- The DR replica runs **asynchronous streaming replication** from the primary region.
+- Failover is performed by **promoting the DR standby replica** to primary, which involves:
   - Removing the `standby.signal` file to disable standby mode
   - Running `pg_ctl promote` on the DR replica
   - Verifying that the instance is now primary
@@ -340,6 +340,8 @@ The task ansible file is in `promote-primary-to-dr-region.yml` and it's triggere
 - **Display success message**: Confirms the DR replica is now primary.
 
 This task is part of the failover automation playbook and should be run only when the primary database is confirmed unavailable.
+
+**IT IS MANUALLY TRIGGERED IN THE PIPELINE IF REQUIRED**
 
 ### Simulation of DR Region Failover for ECS
 

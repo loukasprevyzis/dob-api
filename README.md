@@ -96,8 +96,8 @@ In a real world production environment the following would be implemented:
 ![alt text](revolut.drawio.png)
 
 This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
-To clarify: 
-- In the code's setup there is no R53 DNS and no failover routing policy for it. However in the diagram, it is suggested that this would be deployed in a production environment. 
+To clarify:
+- In the code's setup there is no R53 DNS and no failover routing policy for it. However in the diagram, it is suggested that this would be deployed in a production environment.
 - The EC2 instances for the Databases should be deployed in a private subnet, however in code, they were deployed in public subnets so they can be accessed for local testing and DB Failover between regions. In a real world production environment, bastion hosts or VPN (e.g. AWS VPN Client would be configured and deployed)
 - In addition, the diagram shows VPC Peering similarly, this was not deployed for cost saving and local testing simplicity - In a real world production environment either VPC Peering or Transit Gateway would be configured and deployed - **More information around that can be found in the `ansible` directory `README.md`
 
@@ -112,14 +112,14 @@ To clarify:
 
 1. Use Terraform to provision infrastructure.
 2. Use GitHub Actions to build, test, and deploy.
-3. Monitor logs and metrics for replication health and API uptime.
+3. Monitor logs and metrics for DBs with Prometheus & Alert Manager.
 
 ---
 
-## 🔐 Security
+## 🔐 Security for Ideal Production Environment
 
-- Any secrets exposed are for testing purposes only - in a real production scenario, Secrets Management would be enforce (Secrets Manager, Hashicorp Vault, Ansible Vault)
-- Secure SSH access limited to specific IP.
+- Any secrets exposed are for testing purposes only - in a real production scenario, Secrets Management would be enforced (e.g. Secrets Manager, Hashicorp Vault)
+- Secure SSH access limited to specific IPs.
 - Some security group rules are non-restrictive for testing purposes only from my local machine.
 
 ---
