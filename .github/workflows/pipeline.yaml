@@ -1,7 +1,6 @@
 name: dob-api CI/CD
 
 on:
-  workflow_dispatch:
   pull_request:
     branches: [main, develop]
   push:
@@ -161,7 +160,8 @@ jobs:
   terraform-apply-primary:
     name: Terraform Apply - Primary Region (eu-central-1)
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    on:
+      workflow_dispatch:
     needs: docker-build-push
     steps:
       - uses: actions/checkout@v3
@@ -181,7 +181,8 @@ jobs:
   terraform-apply-failover:
     name: Terraform Apply - Failover
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    on:
+      workflow_dispatch:
     needs:
       - docker-build-push
       - terraform-apply-primary
@@ -203,7 +204,8 @@ jobs:
   ansible-deploy:
     name: Ansible Deploy with Vault
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    on:
+      workflow_dispatch:
     needs: [terraform-apply-primary, terraform-apply-failover]
     steps:
       - uses: actions/checkout@v3
@@ -249,7 +251,8 @@ jobs:
   ansible-promote-dr:
     name: Ansible Promote DR (Failover to Primary DB)
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    on:
+      workflow_dispatch:
     needs: [terraform-apply-primary, terraform-apply-failover]
     steps:
       - uses: actions/checkout@v3
