@@ -6,7 +6,7 @@ This repository contains the CI/CD pipeline for the **dob-api** Go application, 
 
 ## Workflow Triggers
 
-- **Pull Requests** targeting `main` or `develop` branches:
+- **Pull Requests** targeting `main`:
   - Run Go unit tests
   - Terraform plan for primary and failover regions
   - Ansible check (dry run)
@@ -82,7 +82,7 @@ Below are the required secrets and variables you need to configure in your GitHu
 
 This pipeline runs on every PR targeting `main` or `develop` and includes tests, Terraform plans, and Ansible checks.
 
-![PR Pipeline Run Screenshot](./docs/pr-pipeline-run.png)
+**Go Unit Testing**
 
 ---
 
