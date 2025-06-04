@@ -69,9 +69,9 @@ In a real world production environment the following would be implemented:
 - Access via **bastion hosts** , **AWS Systems Manager Session Manager**  or **VPN (e.g AWS VPN Client)* for secure connectivity.
 - Proper **security group and network ACL configurations** to restrict access.
 
-“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”
+**“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”**
 
-This approach balances practical testing needs with a clear understanding of enterprise-grade network security best practices.
+**This approach balances practical testing needs with a clear understanding of enterprise-grade network security best practices.**
 
 ### Infrastructure & Deployment
 
