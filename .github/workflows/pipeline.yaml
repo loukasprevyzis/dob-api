@@ -31,7 +31,7 @@ jobs:
         with:
           path: |
             ~/go/pkg/mod
-            ~/.cache/go-build
+            dob-api/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -168,7 +168,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY_PRIMARY" > ~/.ssh/id_rsa_primary
           chmod 600 ~/.ssh/id_rsa_primary
-          ssh-keyscan -H primary-db-hostname >> ~/.ssh/known_hosts  # Replace
+          ssh-keyscan -H ${{ vars.PRIMARY_DB_HOST }} >> ~/.ssh/known_hosts  # Replace
 
       - name: Ansible Check - Primary Region
         env:
@@ -181,7 +181,6 @@ jobs:
             --check
           rm vault_pass.txt
 
-      # Repeat for Failover if needed
   ansible-deploy:
     name: Ansible Deploy with Vault
     runs-on: ubuntu-latest
@@ -202,7 +201,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY_PRIMARY" > ~/.ssh/id_rsa_primary
           chmod 600 ~/.ssh/id_rsa_primary
-          ssh-keyscan -H primary-db-hostname >> ~/.ssh/known_hosts  # Replace with primary hosts
+          ssh-keyscan -H ${{ vars.PRIMARY_DB_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook - Primary Region
         env:
@@ -221,7 +220,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY_FAILOVER" > ~/.ssh/id_rsa_failover
           chmod 600 ~/.ssh/id_rsa_failover
-          ssh-keyscan -H failover-db-hostname >> ~/.ssh/known_hosts  # Replace with failover hosts
+          ssh-keyscan -H ${{ vars.FAILOVER_DB_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook - Failover Region
         env:
