@@ -11,9 +11,9 @@ Implement a highly available, disaster-resilient "Hello World" API service with:
       - DOB must be a date before today.
     - Returns `204 No Content` on success.
   - `GET /hello/<username>`: Returns a birthday message:
-    - If birthday is **today**:  
+    - If birthday is **today**:
       `{ "message": "Hello, <username>! Happy birthday!" }`
-    - If birthday is **in N days**:  
+    - If birthday is **in N days**:
       `{ "message": "Hello, <username>! Your birthday is in N day(s)" }`
 
 - Backend storage using **self-hosted PostgreSQL** (no managed DB services allowed).
