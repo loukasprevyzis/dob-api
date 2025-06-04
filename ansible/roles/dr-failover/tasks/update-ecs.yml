@@ -1,0 +1,58 @@
+- name: Get current ECS task definition JSON
+  shell: |
+    aws ecs describe-task-definition --task-definition {{ task_definition_family }} --region eu-west-1
+  register: ecs_taskdef_json
+  changed_when: false
+
+- name: Update DB_HOST environment variable in task definition JSON
+  shell: |
+    echo '{{ ecs_taskdef_json.stdout }}' | \
+    jq --arg new_db_host "{{ primary_dr_public_ip }}" --arg exec_role_arn "{{ ecs_execution_role_arn }}" '
+      .taskDefinition
+      | .containerDefinitions[0].environment |=
+          (map(select(.name != "DB_HOST")) + [{"name":"DB_HOST", "value": $new_db_host}])
+      | del(.taskRoleArn)
+      | .executionRoleArn = $exec_role_arn
+      | {family, containerDefinitions, volumes, networkMode, requiresCompatibilities, cpu, memory, executionRoleArn}
+    ' > updated_taskdef.json
+
+- name: Register new task definition with updated DB_HOST
+  shell: |
+    aws ecs register-task-definition \
+      --cli-input-json file://updated_taskdef.json \
+      --region eu-west-1
+  register: new_taskdef_register
+
+- name: Show task definition registration output (formatted)
+  shell: |
+    echo '{{ new_taskdef_register.stdout }}' | jq '.'
+  register: formatted_taskdef_register_output
+  changed_when: false
+
+- name: Print task definition registration JSON
+  debug:
+    msg: "{{ formatted_taskdef_register_output.stdout }}"
+
+- name: Extract new task definition ARN
+  set_fact:
+    new_taskdef_arn: "{{ new_taskdef_register.stdout | from_json | json_query('taskDefinition.taskDefinitionArn') }}"
+
+- name: Update ECS service to use new task definition revision
+  shell: |
+    aws ecs update-service \
+      --cluster {{ ecs_cluster_name }} \
+      --service {{ ecs_service_name }} \
+      --task-definition {{ new_taskdef_arn }} \
+      --force-new-deployment \
+      --region eu-west-1
+  register: ecs_service_update
+
+- name: Show ECS service update output (formatted)
+  shell: |
+    echo '{{ ecs_service_update.stdout }}' | jq '.'
+  register: formatted_service_update_output
+  changed_when: false
+
+- name: Print ECS service update JSON
+  debug:
+    msg: "{{ formatted_service_update_output.stdout }}"

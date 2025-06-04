@@ -1,0 +1,210 @@
+- name: Install dependencies (curl, wget, tar, etc.)
+  apt:
+    name: [curl, wget, tar]
+    state: present
+    update_cache: yes
+
+- name: Create postgres_exporter user
+  user:
+    name: "{{ prometheus_user }}"
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download and install Postgres Exporter
+  get_url:
+    url: "https://github.com/prometheus-community/postgres_exporter/releases/download/v{{ postgres_exporter_version }}/postgres_exporter-{{ postgres_exporter_version }}.linux-amd64.tar.gz"
+    dest: /tmp/postgres_exporter.tar.gz
+  register: download_postgres_exporter
+
+- name: Extract postgres_exporter
+  unarchive:
+    src: /tmp/postgres_exporter.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  when: download_postgres_exporter.changed
+
+- name: Create systemd service file for postgres_exporter
+  copy:
+    dest: /etc/systemd/system/postgres_exporter.service
+    content: |
+      [Unit]
+      Description=PostgreSQL Exporter
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=postgres
+      Group=postgres
+      Environment=DATA_SOURCE_NAME="postgresql://postgres:{{ postgres_password }}@localhost:5432/postgres?sslmode=disable"
+      ExecStart=/usr/local/bin/postgres_exporter --web.listen-address=":9187" --extend.query-path=/path/to/queries.yaml
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart postgres_exporter
+
+- name: Enable and start postgres_exporter service
+  systemd:
+    name: postgres_exporter
+    enabled: yes
+    state: started
+
+- name: Create prometheus user
+  user:
+    name: "{{ prometheus_user }}"
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download Prometheus
+  get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: /tmp/prometheus.tar.gz
+  register: download_prometheus
+
+- name: Extract Prometheus
+  unarchive:
+    src: /tmp/prometheus.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  when: download_prometheus.changed
+
+- name: Create Prometheus config directory
+  file:
+    path: /etc/prometheus
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: '0755'
+
+- name: Deploy prometheus.yml config file
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: '0644'
+  notify: Restart prometheus
+
+- name: Deploy Prometheus alert rules
+  template:
+    src: alerts.yml.j2
+    dest: /etc/prometheus/alerts.yml
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: '0644'
+  notify: Restart prometheus
+
+- name: Create systemd service file for Prometheus
+  copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus Server
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User={{ prometheus_user }}
+      Group={{ prometheus_user }}
+      ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus/data
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart prometheus
+
+- name: Create Prometheus data directory
+  file:
+    path: /var/lib/prometheus/data
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: '0755'
+
+- name: Enable and start Prometheus service
+  systemd:
+    name: prometheus
+    enabled: yes
+    state: started
+
+- name: Create alertmanager user
+  user:
+    name: "{{ alertmanager_user }}"
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download Alertmanager
+  get_url:
+    url: "https://github.com/prometheus/alertmanager/releases/download/v{{ alertmanager_version }}/alertmanager-{{ alertmanager_version }}.linux-amd64.tar.gz"
+    dest: /tmp/alertmanager.tar.gz
+  register: download_alertmanager
+
+- name: Extract Alertmanager
+  unarchive:
+    src: /tmp/alertmanager.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  when: download_alertmanager.changed
+
+- name: Create Alertmanager config directory
+  file:
+    path: /etc/alertmanager
+    state: directory
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_user }}"
+    mode: '0755'
+
+- name: Create Alertmanager data directory
+  file:
+    path: /var/lib/alertmanager/data
+    state: directory
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_user }}"
+    mode: '0755'
+
+- name: Deploy Alertmanager config file
+  copy:
+    dest: /etc/alertmanager/alertmanager.yml
+    content: |
+      global:
+        smtp_smarthost: '{{ smtp_server }}:{{ smtp_port }}'
+        smtp_from: '{{ alert_email_sender }}'
+        smtp_auth_username: '{{ smtp_user }}'
+        smtp_auth_password: '{{ smtp_password }}'
+
+      route:
+        receiver: 'email'
+
+      receivers:
+        - name: 'email'
+          email_configs:
+            - to: '{{ alert_email_recipient }}'
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_user }}"
+    mode: '0644'
+  notify: Restart alertmanager
+
+- name: Create systemd service file for Alertmanager
+  copy:
+    dest: /etc/systemd/system/alertmanager.service
+    content: |
+      [Unit]
+      Description=Prometheus Alertmanager
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User={{ alertmanager_user }}
+      Group={{ alertmanager_user }}
+      ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager/data
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart alertmanager
+
+- name: Enable and start Alertmanager service
+  systemd:
+    name: alertmanager
+    enabled: yes
+    state: started

@@ -1,0 +1,23 @@
+---
+- name: Restart postgres_exporter
+  systemd:
+    name: postgres_exporter
+    state: restarted
+    enabled: yes
+
+- name: Restart prometheus
+  systemd:
+    name: prometheus
+    state: restarted
+    enabled: yes
+
+- name: Restart alertmanager
+  systemd:
+    name: alertmanager
+    state: restarted
+    enabled: yes
+
+- name: Restart PostgreSQL
+  service:
+    name: postgresql
+    state: restarted
