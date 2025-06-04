@@ -160,9 +160,8 @@ jobs:
   terraform-apply-primary:
     name: Terraform Apply - Primary Region (eu-central-1)
     runs-on: ubuntu-latest
-    on:
-      workflow_dispatch:
     needs: docker-build-push
+    environment: prod-manual
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
@@ -181,11 +180,10 @@ jobs:
   terraform-apply-failover:
     name: Terraform Apply - Failover
     runs-on: ubuntu-latest
-    on:
-      workflow_dispatch:
     needs:
       - docker-build-push
       - terraform-apply-primary
+    environment: prod-manual
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
@@ -204,9 +202,8 @@ jobs:
   ansible-deploy:
     name: Ansible Deploy with Vault
     runs-on: ubuntu-latest
-    on:
-      workflow_dispatch:
     needs: [terraform-apply-primary, terraform-apply-failover]
+    environment: prod-manual
     steps:
       - uses: actions/checkout@v3
       - name: Install Ansible and AWS Collection
@@ -251,9 +248,8 @@ jobs:
   ansible-promote-dr:
     name: Ansible Promote DR (Failover to Primary DB)
     runs-on: ubuntu-latest
-    on:
-      workflow_dispatch:
     needs: [terraform-apply-primary, terraform-apply-failover]
+    environment: prod-manual
     steps:
       - uses: actions/checkout@v3
 
