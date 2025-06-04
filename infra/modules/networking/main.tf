@@ -212,6 +212,16 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   description       = "Allow SSH from my public IP"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "allow_ssh_github_actions" {
+  security_group_id = aws_security_group.sg_db.id
+  from_port         = 22
+  to_port           = 22
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "Allow SSH from GitHub Actions runner" ## Github runner IPs could be provided but they are dynamic and they keep changing.
+  #!!This openly permissive SG rule is only for testing. Please use dedicated Github Actions runner IP ranges or build your own self hosted runners!!
+}
+
 # TEMP: Open PostgreSQL access to all for cross-region failover testing
 # NOTE: Tighten this down before production (use VPC CIDR or IP allowlist)
 resource "aws_vpc_security_group_ingress_rule" "allow_cross_region_db_access" {

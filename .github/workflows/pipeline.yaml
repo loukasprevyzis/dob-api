@@ -169,6 +169,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY_PRIMARY" > ~/.ssh/id_rsa_primary
           chmod 600 ~/.ssh/id_rsa_primary
           ssh-keyscan -H ${{ vars.PRIMARY_DB_HOST }} >> ~/.ssh/known_hosts  # Replace
+          ssh-keyscan -H ${{ vars.PRIMARY_REPLICA_DB_HOST }} >> ~/.ssh/known_hosts
 
       - name: Ansible Check - Primary Region
         env:
@@ -202,6 +203,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY_PRIMARY" > ~/.ssh/id_rsa_primary
           chmod 600 ~/.ssh/id_rsa_primary
           ssh-keyscan -H ${{ vars.PRIMARY_DB_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ vars.PRIMARY_REPLICA_DB_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook - Primary Region
         env:
@@ -221,6 +223,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY_FAILOVER" > ~/.ssh/id_rsa_failover
           chmod 600 ~/.ssh/id_rsa_failover
           ssh-keyscan -H ${{ vars.FAILOVER_DB_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ vars.FAILOVER_REPLICA_DB_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook - Failover Region
         env:
