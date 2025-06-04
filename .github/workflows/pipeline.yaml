@@ -9,9 +9,18 @@ on:
 
 jobs:
   go-test:
+    name: Go Unit Tests
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
       - name: Initialize go.sum
+        working-directory: dob-api
         run: |
           if [ ! -f go.sum ]; then
             go mod init temp && go mod tidy > /dev/null 2>&1 || true
