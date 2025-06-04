@@ -22,7 +22,7 @@ jobs:
             dob-api/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-go--
 
       - uses: actions/setup-go@v4
         with:
