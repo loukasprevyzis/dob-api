@@ -1,4 +1,4 @@
-name: Ansible Promote DR & ECS Failover (Manual)
+name: dob-api - Ansible Promote DR & ECS Failover (Manual)
 
 on:
   workflow_dispatch:
