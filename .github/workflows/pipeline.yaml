@@ -1,11 +1,15 @@
 name: dob-api CI/CD
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main, develop]
   push:
     branches: [main]
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["dob-api CI/CD"]
+    types:
+      - completed
 
 jobs:
   go-test:
@@ -69,7 +73,7 @@ jobs:
     name: Terraform Plan - Primary Region (eu-west-1)
     runs-on: ubuntu-latest
     needs: docker-build-push
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
@@ -91,7 +95,7 @@ jobs:
       - terraform-plan-primary
     name: Terraform Plan - Failover Region (eu-central-1)
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
@@ -111,7 +115,7 @@ jobs:
     name: Terraform Apply - Primary Region (eu-central-1)
     runs-on: ubuntu-latest
     needs: docker-build-push
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
@@ -133,7 +137,7 @@ jobs:
       - terraform-apply-primary
     name: Terraform Apply - Failover
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
@@ -153,7 +157,7 @@ jobs:
     name: Ansible Plan (Check Mode)
     runs-on: ubuntu-latest
     needs: [terraform-plan-primary, terraform-plan-failover]
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     steps:
       - uses: actions/checkout@v3
       - name: Install Ansible and AWS Collection
@@ -201,7 +205,7 @@ jobs:
     name: Ansible Deploy with Vault
     runs-on: ubuntu-latest
     needs: [terraform-apply-primary, terraform-apply-failover]
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
       - name: Install Ansible and AWS Collection
@@ -249,7 +253,7 @@ jobs:
     name: Ansible Promote DR (Failover to Primary DB)
     runs-on: ubuntu-latest
     needs: [terraform-apply-primary, terraform-apply-failover]
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
 

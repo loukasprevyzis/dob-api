@@ -85,11 +85,6 @@ In a real world production environment the following would be implemented:
   - Deploys to Kubernetes with rolling update strategy.
 - Backup and restore jobs triggered via GitHub Actions.
 
----
-
-
-
----
 
 ## 🗂️ System Diagram
 
