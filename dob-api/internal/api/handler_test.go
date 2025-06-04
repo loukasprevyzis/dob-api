@@ -78,7 +78,7 @@ func TestHelloHandler_Get_BirthdayToday(t *testing.T) {
 	today := time.Now().Format("2006-01-02")
 	todayTime, _ := time.Parse("2006-01-02", today)
 
-	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE username = \$1`).
+	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE LOWER\(username\) = LOWER\(\$1\)`).
 		WithArgs("testuser").
 		WillReturnRows(sqlmock.NewRows([]string{"date_of_birth"}).AddRow(todayTime))
 
@@ -143,7 +143,7 @@ func TestHelloHandler_Put_ValidDOB(t *testing.T) {
 // Test GET /hello/<username> for a user not found
 func TestHelloHandler_Get_UserNotFound(t *testing.T) {
 	app, mock := setupTestApp(t)
-	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE username = \$1`).
+	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE LOWER\(username\) = LOWER\(\$1\)`).
 		WithArgs("unknownuser").
 		WillReturnError(sql.ErrNoRows)
 
@@ -168,7 +168,7 @@ func TestHelloHandler_Get_BirthdayFuture(t *testing.T) {
 
 	futureDate := time.Now().AddDate(0, 0, 10)
 
-	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE username = \$1`).
+	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE LOWER\(username\) = LOWER\(\$1\)`).
 		WithArgs("testuser").
 		WillReturnRows(sqlmock.NewRows([]string{"date_of_birth"}).AddRow(futureDate))
 
