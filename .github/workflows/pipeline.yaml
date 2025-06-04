@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Initialize go.sum
+        working-directory: dob-api
         run: |
           # Ensure go.sum exists
           if [ ! -f go.sum ]; then
@@ -29,6 +30,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run Go Tests
+        working-directory: dob-api
         run: |
           go mod tidy
           go test ./... -v -cover
