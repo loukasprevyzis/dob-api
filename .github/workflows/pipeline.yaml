@@ -22,16 +22,18 @@ jobs:
       - name: Initialize go.sum
         working-directory: dob-api
         run: |
-          # Ensure go.sum exists by downloading modules (silent)
-          go mod download -x > /dev/null 2>&1 || true
+          # Ensure go.sum exists
+          if [ ! -f go.sum ]; then
+            go mod download -x > /dev/null 2>&1 || true
+          fi
 
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
           path: |
-            dob-api/pkg/mod
+            ~/go/pkg/mod
             dob-api/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
