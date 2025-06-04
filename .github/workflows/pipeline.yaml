@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Initialize go.sum
-        working-directory: dob-api
         run: |
           if [ ! -f go.sum ]; then
             go mod init temp && go mod tidy > /dev/null 2>&1 || true
@@ -29,7 +28,6 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run Go Tests
-        working-directory: dob-api
         run: |
           go mod tidy
           go test ./... -v -cover
@@ -39,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: go-test
     env:
-      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}  # <-- explicitly set here
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/configure-aws-credentials@v2
