@@ -14,7 +14,7 @@ This repository implements a structured, production-grade GitHub Actions pipelin
 - ✅ Ansible Check Mode — Runs only for PRs.
 
 ## 2. Manual Deployments (`dob-api Manual Deploys`)
-**Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch.
+**Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
 
 **Jobs:**
 - ⏩ Terraform Apply — Primary region.
@@ -25,8 +25,9 @@ Each job accepts input parameters like:
 - `environment` (e.g. `prod-manual`)
 - `version` (commit SHA or tag, optional)
 
-## 3. Promote DR (`Ansible Promote DR`)
-**Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch.
+## 3. Promote DR (`dob-api - Ansible Promote DR`)
+**Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
+.
 
 **Job:**
 - ⏩ Promote DR — Runs Ansible playbook to failover the DR region to become primary.
