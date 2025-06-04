@@ -13,11 +13,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-// App holds the DB connection
-type App struct {
-	db *sql.DB
-}
-
 // setupTestApp creates App with sqlmock
 func setupTestApp(t *testing.T) (*App, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
