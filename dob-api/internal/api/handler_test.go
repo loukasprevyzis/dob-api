@@ -13,7 +13,12 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-// setupTestApp creates a new App with a mocked DB for testing
+// App holds the DB connection
+type App struct {
+	db *sql.DB
+}
+
+// setupTestApp creates App with sqlmock
 func setupTestApp(t *testing.T) (*App, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -77,6 +82,7 @@ func TestHelloHandler_Get_BirthdayToday(t *testing.T) {
 
 	today := time.Now().Format("2006-01-02")
 	todayTime, _ := time.Parse("2006-01-02", today)
+
 	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE username = \$1`).
 		WithArgs("testuser").
 		WillReturnRows(sqlmock.NewRows([]string{"date_of_birth"}).AddRow(todayTime))
@@ -91,7 +97,6 @@ func TestHelloHandler_Get_BirthdayToday(t *testing.T) {
 		t.Errorf("expected status 200 OK, got %d", res.StatusCode)
 	}
 
-	// Check response body for "Happy birthday!"
 	body := w.Body.String()
 	if !strings.Contains(body, "Happy birthday!") {
 		t.Errorf("expected message to contain 'Happy birthday!', got %s", body)
@@ -166,8 +171,8 @@ func TestHelloHandler_Get_UserNotFound(t *testing.T) {
 func TestHelloHandler_Get_BirthdayFuture(t *testing.T) {
 	app, mock := setupTestApp(t)
 
-	// Birthday is 10 days from today
 	futureDate := time.Now().AddDate(0, 0, 10)
+
 	mock.ExpectQuery(`SELECT date_of_birth FROM users WHERE username = \$1`).
 		WithArgs("testuser").
 		WillReturnRows(sqlmock.NewRows([]string{"date_of_birth"}).AddRow(futureDate))
