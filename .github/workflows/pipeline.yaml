@@ -14,28 +14,30 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: List repo root
-        run: ls -la
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
 
-      - name: List dob-api folder
-        run: ls -la dob-api
+      - name: Initialize go.sum
+        working-directory: dob-api
+        run: |
+          # Ensure go.sum exists by downloading modules (silent)
+          go mod download -x > /dev/null 2>&1 || true
 
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
           path: |
-            dob-api/pkg/mod
+            ~/go/pkg/mod
             dob-api/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go--
 
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.24'
       - name: Run Go Tests
+        working-directory: dob-api
         run: |
-          cd dob-api
           go mod tidy
           go test ./... -v -cover
 
