@@ -57,7 +57,7 @@ jobs:
           docker push $REPO_URI:$IMAGE_TAG
 
   terraform-plan-primary:
-    name: Terraform Plan - Primary
+    name: Terraform Plan - Primary Region (eu-west-1)
     runs-on: ubuntu-latest
     needs: docker-build-push
     if: github.event_name == 'pull_request'
@@ -80,7 +80,7 @@ jobs:
     needs:
       - docker-build-push
       - terraform-plan-primary
-    name: Terraform Plan - Failover
+    name: Terraform Plan - Failover Region (eu-central-1)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -99,7 +99,7 @@ jobs:
           terraform plan -var-file=env.tfvars -input=false -out=tfplan
 
   terraform-apply-primary:
-    name: Terraform Apply - Primary
+    name: Terraform Apply - Primary Region (eu-central-1)
     runs-on: ubuntu-latest
     needs: docker-build-push
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
