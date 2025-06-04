@@ -30,10 +30,11 @@ jobs:
         with:
           path: |
             ~/go/pkg/mod
+            dob-api/pkg/mod
             dob-api/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go--
+            ${{ runner.os }}-go-
 
       - name: Run Go Tests
         working-directory: dob-api
