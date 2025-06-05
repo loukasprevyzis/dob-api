@@ -1,11 +1,7 @@
-# ECS (Fargate) Deployment for dob-api
-
-# Create ECS cluster
 resource "aws_ecs_cluster" "dob_api" {
   name = var.ecs_cluster_name
 }
 
-# IAM role for ECS task execution
 resource "aws_iam_role" "ecs_task_execution" {
   name = "ecsTaskExecutionRole"
 
@@ -31,8 +27,6 @@ resource "aws_cloudwatch_log_group" "dob_api" {
   retention_in_days = 7
 }
 
-
-# ECS Task Definition
 resource "aws_ecs_task_definition" "dob_api" {
   family                   = "dob-api-task"
   network_mode             = "awsvpc"
@@ -77,7 +71,7 @@ resource "aws_ecs_task_definition" "dob_api" {
     }
   ])
 }
-# ECS Service
+
 resource "aws_ecs_service" "dob_api" {
   name            = "dob-api-service"
   cluster         = aws_ecs_cluster.dob_api.id

@@ -1,4 +1,3 @@
-# ---------- Build Stage ----------
 FROM golang:1.24-alpine AS builder
 
 
@@ -11,7 +10,6 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o dob-api ./cmd/server
 
-# ---------- Final Stage ----------
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates

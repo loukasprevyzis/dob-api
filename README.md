@@ -15,27 +15,25 @@ Implement a highly available, disaster-resilient "Hello World" API service with:
       `{ "message": "Hello, <username>! Happy birthday!" }`
     - If birthday is **in N days**:
       `{ "message": "Hello, <username>! Your birthday is in N day(s)" }`
-
 - Backend storage using **self-hosted PostgreSQL** (no managed DB services allowed).
 
-- **Highly Available PostgreSQL Cluster**:
+
+ **Highly Available PostgreSQL Cluster**:
   - Multi-AZ primary + replica async streaming replication.
   - Cross-region failover capability to ensure recovery from zone or region outages.
   - Automated backups with restore and recovery process in the failover region.
 
-- Automated CI/CD pipelines for:
+**Automated CI/CD pipelines for:**
+
   - Build, test, and deployment of Go service.
   - Infrastructure provisioning using Terraform (Primary and Failover Disaster Recovery Region)
   - Ansible - To configure PostgreSQL, PostgreSQL replication & automated backups pushed to S3 (Both Prmary and Disaster Recovery regions)
+  - Ansible for Failover (Promoting to Disaster Recovery Envionment)
   - No-downtime production deployment strategy.
 
 - A clear **system architecture diagram** illustrating deployment in AWS/GCP.
 
 ---
-
-## 🧱 Components & Architecture
-
-For this assignment, I kept the Terraform flat without modules to focus on correctness, repeatability, and clarity. If this were a production system or part of a larger team project, I would refactor into reusable modules to improve scalability and maintainability.
 
 ### API Service
 
@@ -69,26 +67,22 @@ In a real world production environment the following would be implemented:
 - Access via **bastion hosts** , **AWS Systems Manager Session Manager**  or **VPN (e.g AWS VPN Client)* for secure connectivity.
 - Proper **security group and network ACL configurations** to restrict access.
 
-**“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”**
+>**“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”**
 
-**This approach balances practical testing needs with a clear understanding of enterprise-grade network security best practices.**
+
 
 ### Infrastructure & Deployment
-
-- Terraform scripts provision VPC, subnets, EC2, security groups, and EKS cluster.
-- Provisions R53 configuration with a new hosted zone using a purchased pre-existing domain name.
-- User data scripts configure PostgreSQL on EC2, set up replication with two multi AZ ec2 psql clusters.
+- Deploys a primary region in eu-west-1.
+- Terraform code provisions VPC, subnets, EC2, networking, and ECS cluster.
+- Provisions R53 configuration for presentation only and commented out sections only for reference for failover routing policy.
 - Deploys a secondary region in eu-central-1 for DB disaster recovery failover.
-- GitHub Actions for CI/CD pipeline:
-  - Runs unit tests locally.
-  - Builds and publishes Docker images.
-  - Deploys to Kubernetes with rolling update strategy.
-- Backup and restore jobs triggered via GitHub Actions.
-
+- Ansible configuration scripts for PostgreSQL Setup, DB Automated Backups & DR Region Failover
+- GitHub Actions for CI/CD pipeline
 
 ## 🗂️ System Diagram
 
-![alt text](architectural-diagram.drawio.png)
+![alt text](architecture-diagram.png)
+
 
 This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
 To clarify:
@@ -99,11 +93,16 @@ To clarify:
 
 - In addition, the diagram shows VPC Peering similarly, this was not deployed for cost saving and local testing simplicity - In a real world production environment either VPC Peering or Transit Gateway would be configured and deployed - **More information around that can be found in the `ansible` directory `README.md`
 
+⚠️PLEASE DO DOWNLOAD FROM GITHUB  UI  AS SHOWN BELOW, FOR BETTER QUALITY VISIBILITY - HAVE ALSO INCLUDED IT AS .drawio file in the root of this project.
+
+![alt text](<Screenshot 2025-06-05 at 17.47.26.png>)
+
+---
 
 ## 🚀 How to Run Locally
 
-- For Ansible: see `README.md` in `ansible` directory - **ALSO EXTENSIVE EXPLANATIONS OF REGION FAILOVER AND DECISIONS AROUND PROCESS FOR THE PURPOSE OF THIS PROJECT**
-- For Terraform: see `README.md` in `infra` directory
+- For Ansible: see `README.md` in `ansible` directory.
+- For Terraform: see `README.md` for requirements in the region folders.
 - For Golang Application: see README..md in `dob-api` directory
 
 
@@ -118,14 +117,12 @@ To clarify:
 ## 🔐 Security for Ideal Production Environment
 
 - Any secrets exposed are for testing purposes only - in a real production scenario, Secrets Management would be enforced (e.g. Secrets Manager, Hashicorp Vault)
-- Secure SSH access limited to specific IPs.
 - Some security group rules are non-restrictive for testing purposes only from my local machine.
 
 ---
 
 ## 📚 Notes
 - Designed for self-hosted PostgreSQL, avoiding managed services.
-- Suitable for real-world SRE/DataOps challenges involving HA, DR, and automation.
 - Code quality and testing prioritized.
-- Use of common sense for validations, retries, and error handling.
+- Use of common sense for validations, retries, and error handling for the API app.
 - Application startup handles app user/table creation, removing the need for fragile logic in cloud-init scripts.

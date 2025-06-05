@@ -39,7 +39,7 @@ func main() {
 	app := api.NewApp(dbConn)
 	http.HandleFunc("/hello/", app.HelloHandler)
 
-	// Health check endpoint for ALB/NLB
+	// Health check endpoint for ALB
 	http.HandleFunc("/hello/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))

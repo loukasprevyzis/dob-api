@@ -77,7 +77,7 @@ variable "primary_ip" {
 }
 
 variable "vpc_id" {
-  description = "The VPC ID where EKS and related resources will be deployed"
+  description = "The VPC ID where ECS and related resources will be deployed"
   type        = string
 }
 

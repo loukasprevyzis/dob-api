@@ -4,18 +4,21 @@
 
 This repository implements a structured, production-grade GitHub Actions pipeline with clear separation of concerns and triggering conditions. The workflows are split into three files for clarity and control:
 
-## 1. CI Pipeline (`dob-api CI/CD`)
+## CICD Pipeline (`dob-api CI/CD`)
 **Trigger:** Automatically on PRs to `main` or pushes to `main`.
 
+![alt text](<Screenshot 2025-06-04 at 18.59.19.png>)
 **Jobs:**
 - ✅ Go Unit Tests — Runs automatically for both PRs and `main`.
 - ✅ Docker Build & Push — Runs only for PRs.
 - ✅ Terraform Plan (Primary & DR) — Runs only for PRs.
 - ✅ Ansible Check Mode — Runs only for PRs.
 
-## 2. Manual Deployments (`dob-api Manual Deploys`)
+
+## Manual Trigger Workflows - For Terraform Apply & Ansible Confuraration Deployments
 **Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
 
+![alt text](<Screenshot 2025-06-04 at 19.13.07.png>)
 **Jobs:**
 - ⏩ Terraform Apply — Primary region.
 - ⏩ Terraform Apply — DR region.
@@ -25,12 +28,22 @@ Each job accepts input parameters like:
 - `environment` (e.g. `prod-manual`)
 - `version` (commit SHA or tag, optional)
 
-## 3. Promote DR (`dob-api - Ansible Promote DR`)
+## DR Failover (`dob-api - Ansible Promote DR`)
+
 **Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
-.
+
+![alt text](<Screenshot 2025-06-04 at 19.32.02.png>)
 
 **Job:**
-- ⏩ Promote DR — Runs Ansible playbook to failover the DR region to become primary.
+- ⏩ Promote DR — Runs Ansible playbook to failover the DR region to become primary (DBs and ECS Task Definition update).
+
+
+---
+
+## Variables and Secrets
+
+![alt text](<Screenshot 2025-06-05 at 17.39.26.png>)
+![alt text](<Screenshot 2025-06-05 at 17.39.49.png>)
 
 ## Why This Setup?
 - 🔒 Production deploys and DB promotions are protected by manual triggers.

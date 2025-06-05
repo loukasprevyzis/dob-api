@@ -84,7 +84,6 @@ resource "aws_volume_attachment" "db_data_attach_replica" {
   instance_id = aws_instance.db_replica.id
 }
 
-# -------- EC2 Role for PostgreSQL Backups --------
 resource "aws_iam_role" "ec2_postgres_role" {
   name = "${var.cluster_name}-ec2-postgres-role"
 
@@ -141,7 +140,7 @@ resource "aws_iam_role" "backup_automation_role" {
     Statement = [{
       Effect = "Allow",
       Principal = {
-        AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" # or your GitHub OIDC provider or Lambda ARN
+        AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
       },
       Action = "sts:AssumeRole"
     }]
