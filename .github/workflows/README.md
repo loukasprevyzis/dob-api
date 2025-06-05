@@ -15,7 +15,7 @@ This repository implements a structured, production-grade GitHub Actions pipelin
 - ✅ Ansible Check Mode — Runs only for PRs.
 
 
-## Manual Trigger Workflows - For Terraform Apply & Ansible Confuraration Deployments
+## Manual Trigger Workflows - For Terraform Apply & Ansible Configuration Deployments
 **Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
 
 ![alt text](</screenshots/Screenshot 2025-06-04 at 19.13.07.png>)
