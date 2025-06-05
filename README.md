@@ -86,6 +86,7 @@ In a real world production environment the following would be implemented:
 - Provisions R53 configuration for presentation only and commented out sections only for reference for failover routing policy.
 - Deploys a secondary region in eu-central-1 for DB disaster recovery failover.
 - Ansible configuration scripts for PostgreSQL Setup, DB Automated Backups & DR Region Failover
+- Ansible for logs and metrics for DBs with Prometheus & Alert Manager.
 - GitHub Actions for CI/CD pipeline
 
 ## 🗂️ System Diagram
@@ -108,18 +109,16 @@ To clarify:
 
 ---
 
-## 🚀 How to Run Locally
+## 🚀 How to Run Locally & In Depth Documentation Outside Of This README
 
-- For Ansible: see `README.md` in `ansible` directory.
-- For Terraform: see `README.md` for requirements in the region folders.
-- For Golang Application: see README..md in `dob-api` directory
+- For Ansible: see documentation in `ansible/README.md`.
+- For Terraform: see documentation  in the region folders in`infra/primary-region/README.md` & `infra/failover-region/README.md`.
+- For Golang Application: see documentation in `dob-api/cmd/server/README.md`.
+- For Golang API Setup: see documentation in `dob-api/internal/api/README-API.md`.
+- For Golang API Unit Testing: see documentation in `dob-api/internal/api/README-TESTS.md`.
+- For Docker Setup: see documentation in `dob-api/README-DOCKER.md`.
+- For CICD Pipelines Setup: see doucumentation in `.github/workflows/README.md`
 
-
-## 📦 Deployment
-
-1. Use Terraform to provision infrastructure.
-2. Use GitHub Actions to build, test, and deploy.
-3. Monitor logs and metrics for DBs with Prometheus & Alert Manager.
 
 ---
 

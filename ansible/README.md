@@ -87,6 +87,13 @@ The setup now uses the native Debian/Ubuntu PostgreSQL cluster service `postgres
 
 ## ⚙️ Variables
 
+>All variable files are encrypted with Ansible Vault to avoid exposure of sensitive data such as passwords.
+
+To encrypt with Ansible Vault:
+
+  - `ansible-vault encrypt ansible/roles/postgres/vars/main.yml`
+  - `ansible-vault encrypt ansible/roles/dr-failover/vars/main.ym`
+
 | Variable Name                   | Description                                                | Example / Notes                                                                                   |
 |--------------------------------|------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
 | `pg_version`                   | PostgreSQL version to install                              | `12`                                                                                               |
@@ -439,9 +446,7 @@ Ansible connects to target hosts over SSH using private keys for authentication.
   3. Run Ansible specifying the private key or relying on default SSH configuration.
   4. Remove the key file after deployment to avoid leaking credentials.
 
-- **Encrypt vars/main.yml files with Ansible Vault:**
-  - `ansible-vault encrypt ansible/roles/postgres/vars/main.yml`
-  - ansible-vault encrypt ansible/roles/dr-failover/vars/main.yml
+- **Encrypted vars/main.yml files with Ansible Vault:**l`
   - Add Vault password to pipeline secrets.
 
 - **Best Practices:**
