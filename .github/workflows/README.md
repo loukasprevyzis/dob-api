@@ -1,5 +1,3 @@
-
-
 # GitHub Actions CI/CD Overview for dob-api
 
 This repository implements a structured, production-grade GitHub Actions pipeline with clear separation of concerns and triggering conditions. The workflows are split into three files for clarity and control:
