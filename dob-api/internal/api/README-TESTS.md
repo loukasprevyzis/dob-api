@@ -34,3 +34,13 @@ Each test directly corresponds to a specific branch or validation in the `helloH
 
 - **GET /hello/ (Invalid Username Format)**
 	- Validates that usernames containing non-alphabetic characters return a `400 Bad Request` error, ensuring proper input sanitation on retrieval requests.
+
+### 🧪 Running Tests Locally
+
+To run all unit tests locally for the `dob-api` service:
+
+`go test`
+
+Confirm that unit tests are passing:
+
+![alt text](<Screenshot 2025-06-05 at 18.09.30.png>)
