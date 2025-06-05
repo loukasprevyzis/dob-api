@@ -17,7 +17,6 @@ Implement a highly available, disaster-resilient "Hello World" API service with:
       `{ "message": "Hello, <username>! Your birthday is in N day(s)" }`
 - Backend storage using **self-hosted PostgreSQL** (no managed DB services allowed).
 
-
  **Highly Available PostgreSQL Cluster**:
   - Multi-AZ primary + replica async streaming replication.
   - Cross-region failover capability to ensure recovery from zone or region outages.
@@ -31,7 +30,17 @@ Implement a highly available, disaster-resilient "Hello World" API service with:
   - Ansible for Failover (Promoting to Disaster Recovery Envionment)
   - No-downtime production deployment strategy.
 
-- A clear **system architecture diagram** illustrating deployment in AWS/GCP.
+- A clear **system architecture diagram** illustrating deployment in AWS.
+
+---
+
+# API Service Application Functionality Confirmation
+
+![alt text](<screenshots/Screenshot 2025-06-04 at 19.45.10.png>)
+
+![alt text](</screenshots/Screenshot 2025-06-04 at 19.45.16.png>)
+
+![alt text](</screenshots/Screenshot 2025-06-04 at 19.45.41.png>)
 
 ---
 
@@ -95,7 +104,7 @@ To clarify:
 
 ⚠️PLEASE DO DOWNLOAD FROM GITHUB  UI  AS SHOWN BELOW, FOR BETTER QUALITY VISIBILITY - HAVE ALSO INCLUDED IT AS .drawio file in the root of this project.
 
-![alt text](<Screenshot 2025-06-05 at 17.47.26.png>)
+![alt text](</screenshots/Screenshot 2025-06-05 at 17.47.26.png>)
 
 ---
 

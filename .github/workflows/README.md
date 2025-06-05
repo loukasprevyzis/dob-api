@@ -7,7 +7,7 @@ This repository implements a structured, production-grade GitHub Actions pipelin
 ## CICD Pipeline (`dob-api CI/CD`)
 **Trigger:** Automatically on PRs to `main` or pushes to `main`.
 
-![alt text](<Screenshot 2025-06-04 at 18.59.19.png>)
+![alt text](</screenshots/Screenshot 2025-06-04 at 18.59.19.png>)
 **Jobs:**
 - ✅ Go Unit Tests — Runs automatically for both PRs and `main`.
 - ✅ Docker Build & Push — Runs only for PRs.
@@ -18,7 +18,7 @@ This repository implements a structured, production-grade GitHub Actions pipelin
 ## Manual Trigger Workflows - For Terraform Apply & Ansible Confuraration Deployments
 **Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
 
-![alt text](<Screenshot 2025-06-04 at 19.13.07.png>)
+![alt text](</screenshots/Screenshot 2025-06-04 at 19.13.07.png>)
 **Jobs:**
 - ⏩ Terraform Apply — Primary region.
 - ⏩ Terraform Apply — DR region.
@@ -32,7 +32,7 @@ Each job accepts input parameters like:
 
 **Trigger:** Manually via GitHub UI (`workflow_dispatch`) on the `main` branch with `prod-manual` environment configured in the Github Repository settings.
 
-![alt text](<Screenshot 2025-06-04 at 19.32.02.png>)
+![alt text](</screenshots/Screenshot 2025-06-04 at 19.32.02.png>)
 
 **Job:**
 - ⏩ Promote DR — Runs Ansible playbook to failover the DR region to become primary (DBs and ECS Task Definition update).
@@ -42,8 +42,8 @@ Each job accepts input parameters like:
 
 ## Variables and Secrets
 
-![alt text](<Screenshot 2025-06-05 at 17.39.26.png>)
-![alt text](<Screenshot 2025-06-05 at 17.39.49.png>)
+![alt text](</screenshots/Screenshot 2025-06-05 at 17.39.26.png>)
+![alt text](</screenshots/Screenshot 2025-06-05 at 17.39.49.png>)
 
 ## Why This Setup?
 - 🔒 Production deploys and DB promotions are protected by manual triggers.

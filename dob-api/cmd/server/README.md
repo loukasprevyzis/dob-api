@@ -1,7 +1,3 @@
-# dob-api
-
-A simple Go HTTP server with PostgreSQL integration that exposes a `/hello/` API and a health check endpoint.
-
 ## Features
 
 - Connects to a PostgreSQL database using environment variables

@@ -41,6 +41,7 @@ To run all unit tests locally for the `dob-api` service:
 
 `go test`
 
-Confirm that unit tests are passing:
+Confirm that unit tests are passing (locally on in CICD):
 
-![alt text](<Screenshot 2025-06-05 at 18.09.30.png>)
+![alt text](</screenshots/Screenshot 2025-06-05 at 18.09.30.png>)
+![alt text](</screenshots/Screenshot 2025-06-05 at 18.41.06.png>)

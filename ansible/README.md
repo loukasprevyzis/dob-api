@@ -147,7 +147,7 @@ ORDER BY grantee, table_name;
 
 Result:
 
-![alt text](<Screenshot 2025-06-02 at 21.53.27.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 21.53.27.png>)
 
 
 ### Replication Confimation
@@ -157,31 +157,33 @@ Result:
 **Check active replication connections:**
 `SELECT pid, client_addr, state, sync_state FROM pg_stat_replication;`
 
-![alt text](<Screenshot 2025-06-02 at 21.32.10.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 21.32.10.png>)
 
 ### On the Replica
 
 **Check WAL receiver status:**
 `SELECT * FROM pg_stat_wal_receiver;`
 
-![alt text](<Screenshot 2025-06-02 at 21.29.36.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 21.29.36.png>)
 
 **Check replication delay (lag):**
 `SELECT now() - pg_last_xact_replay_timestamp() AS replication_delay;`
 
-![alt text](<Screenshot 2025-06-02 at 21.33.14.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 21.33.14.png>)
 
 
 **Confirm this is a standby server:**
 `SELECT pg_is_in_recovery();`
 
-![alt text](<Screenshot 2025-06-02 at 21.34.17.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 21.34.17.png>)
 
 **Test data sync by querying an application table:**
 
 `SELECT * FROM users;`
 
-![alt text](<Screenshot 2025-06-02 at 21.44.28.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 21.44.28.png>)
+
+
 
 ## NOTE: Replication Slots
 
@@ -239,25 +241,25 @@ This cloud-backed WAL archiving and backup solution enhances high availability, 
 Script runs every night at 2 am and pushes backups to the respective S3 buckets that was deployed in the terraform module of this project with the appropriate permissions:
 
 
-![alt text](<Screenshot 2025-06-02 at 23.09.58.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 23.09.58.png>)
 
-![alt text](<Screenshot 2025-06-02 at 23.10.20.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 23.10.20.png>)
 
-![alt text](<Screenshot 2025-06-02 at 23.10.38.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 23.10.38.png>)
 
-![alt text](<Screenshot 2025-06-02 at 23.11.24.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 23.11.24.png>)
 
-![alt text](<Screenshot 2025-06-02 at 23.11.54.png>)
+![alt text](</screenshots/Screenshot 2025-06-02 at 23.11.54.png>)
 
 **Similarly in the DR region for the its primary DB:**
 
 **Note: Ignore the timestamps as this script was automatically run at 2 am (EEST)**
 
-![alt text](<Screenshot 2025-06-03 at 00.16.57.png>)
+![alt text](</screenshots/Screenshot 2025-06-03 at 00.16.57.png>)
 
-![alt text](<Screenshot 2025-06-03 at 00.17.16.png>)
+![alt text](</screenshots/Screenshot 2025-06-03 at 00.17.16.png>)
 
-![alt text](<Screenshot 2025-06-03 at 00.18.28.png>)
+![alt text](</screenshots/Screenshot 2025-06-03 at 00.18.28.png>)
 
 ### 🛠️ Restore Script Deployment
 
@@ -370,7 +372,7 @@ The task ansible file is in `promote-dr.yml` and it's triggered by a standalone 
 
 **If monitoring alerts that primary region is unavailable then proceed with the above automation for DR Region Failover - For example:**
 
-![alt text](<Screenshot 2025-06-03 at 18.25.33.png>)
+![alt text](</screenshots/Screenshot 2025-06-03 at 18.25.33.png>)
 
 
 ⚠️This task is part of the failover automation playbook and should be run only when the primary database is confirmed unavailable.⚠️
@@ -411,11 +413,11 @@ To simulate a failover scenario where ECS starts pointing to the DR region's dat
 ##### Tests to Confirm functionality:
 
 - ECS New Task Defition should be running and pointing to DR Region DB Primary IP (DB_HOST):
-![alt text](<Screenshot 2025-06-04 at 21.00.50.png>)
-![alt text](<Screenshot 2025-06-04 at 20.59.34.png>)
+![alt text](</screenshots/Screenshot 2025-06-04 at 21.00.50.png>)
+![alt text](</screenshots/Screenshot 2025-06-04 at 20.59.34.png>)
 
 - App responds and is available:
-![alt text](<Screenshot 2025-06-04 at 21.02.22.png>)
+![alt text](</screenshots/Screenshot 2025-06-04 at 21.02.22.png>)
 ---
 
 ## 🔐 Deployment with SSH Private Keys and Pipeline Secrets
