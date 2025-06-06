@@ -131,9 +131,10 @@ To clarify:
 
 - In addition, the diagram shows VPC Peering similarly, this was not deployed for cost saving and local testing simplicity - In a real world production environment either VPC Peering or Transit Gateway would be configured and deployed - **More information around that can be found in the `ansible` directory `README.md`
 
-⚠️PLEASE DO DOWNLOAD FROM GITHUB  UI  AS SHOWN BELOW, FOR BETTER QUALITY VISIBILITY - HAVE ALSO INCLUDED IT AS .drawio file in the root of this project.
+⚠️IF NEEDED, PLEASE DO DOWNLOAD FROM GITHUB  UI  AS SHOWN BELOW, FOR BETTER QUALITY VISIBILITY - HAVE ALSO INCLUDED IT AS .drawio file in the root of this project.
 
-![alt text](</screenshots/Screenshot 2025-06-05 at 17.47.26.png>)
+
+![alt text](<Screenshot 2025-06-06 at 16.34.59.png>)
 
 ---
 
