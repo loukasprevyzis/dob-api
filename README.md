@@ -134,7 +134,7 @@ To clarify:
 ⚠️IF NEEDED, PLEASE DO DOWNLOAD FROM GITHUB  UI  AS SHOWN BELOW, FOR BETTER QUALITY VISIBILITY - HAVE ALSO INCLUDED IT AS .drawio file in the root of this project.
 
 
-![alt text](<Screenshot 2025-06-06 at 16.34.59.png>)
+![alt text](<screenshots/Screenshot 2025-06-06 at 16.34.59.png>)
 
 ---
 
