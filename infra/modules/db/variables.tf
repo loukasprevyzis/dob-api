@@ -19,7 +19,7 @@ variable "office_cidr" {
 }
 
 variable "cluster_public_access_cidrs" {
-  description = "List of CIDR blocks allowed to access the EKS cluster API server"
+  description = "List of CIDR blocks allowed to access the ECS cluster API server"
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
@@ -75,7 +75,7 @@ variable "primary_ip" {
 }
 
 variable "vpc_id" {
-  description = "The VPC ID where EKS and related resources will be deployed"
+  description = "The VPC ID where ECS and related resources will be deployed"
   type        = string
 }
 
@@ -93,7 +93,7 @@ variable "sg_app_id" {
 variable "ec2_private_key_pem" {
   description = "EC2 private key in PEM format"
   type        = string
-  
+
 }
 
 variable "public_subnet_id" {

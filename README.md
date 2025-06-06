@@ -15,27 +15,34 @@ Implement a highly available, disaster-resilient "Hello World" API service with:
       `{ "message": "Hello, <username>! Happy birthday!" }`
     - If birthday is **in N days**:
       `{ "message": "Hello, <username>! Your birthday is in N day(s)" }`
-
 - Backend storage using **self-hosted PostgreSQL** (no managed DB services allowed).
 
-- **Highly Available PostgreSQL Cluster**:
+ **Highly Available PostgreSQL Cluster**:
   - Multi-AZ primary + replica async streaming replication.
   - Cross-region failover capability to ensure recovery from zone or region outages.
   - Automated backups with restore and recovery process in the failover region.
 
-- Automated CI/CD pipelines for:
+**Automated CI/CD pipelines for:**
+
   - Build, test, and deployment of Go service.
   - Infrastructure provisioning using Terraform (Primary and Failover Disaster Recovery Region)
   - Ansible - To configure PostgreSQL, PostgreSQL replication & automated backups pushed to S3 (Both Prmary and Disaster Recovery regions)
+  - Ansible for Failover (Promoting to Disaster Recovery Envionment)
   - No-downtime production deployment strategy.
 
-- A clear **system architecture diagram** illustrating deployment in AWS/GCP.
+- A clear **system architecture diagram** illustrating deployment in AWS.
 
 ---
 
-## 🧱 Components & Architecture
+# API Service Application Functionality Confirmation
 
-For this assignment, I kept the Terraform flat without modules to focus on correctness, repeatability, and clarity. If this were a production system or part of a larger team project, I would refactor into reusable modules to improve scalability and maintainability.
+![alt text](<screenshots/Screenshot 2025-06-04 at 19.45.10.png>)
+
+![alt text](</screenshots/Screenshot 2025-06-04 at 19.45.16.png>)
+
+![alt text](</screenshots/Screenshot 2025-06-04 at 19.45.41.png>)
+
+---
 
 ### API Service
 
@@ -69,26 +76,51 @@ In a real world production environment the following would be implemented:
 - Access via **bastion hosts** , **AWS Systems Manager Session Manager**  or **VPN (e.g AWS VPN Client)* for secure connectivity.
 - Proper **security group and network ACL configurations** to restrict access.
 
-**“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”**
+>**“Route 53 failover is not deployed to avoid cost, but is part of the high availability design. In production, a domain (e.g., api.example.com) would point to a Route 53 hosted zone with a failover routing policy between primary and DR ALBs.”**
 
-**This approach balances practical testing needs with a clear understanding of enterprise-grade network security best practices.**
+
 
 ### Infrastructure & Deployment
-
-- Terraform scripts provision VPC, subnets, EC2, security groups, and EKS cluster.
-- Provisions R53 configuration with a new hosted zone using a purchased pre-existing domain name.
-- User data scripts configure PostgreSQL on EC2, set up replication with two multi AZ ec2 psql clusters.
+- Deploys a primary region in eu-west-1.
+- Terraform code provisions VPC, subnets, EC2, networking, and ECS cluster.
+- Provisions R53 configuration for presentation only and commented out sections only for reference for failover routing policy.
 - Deploys a secondary region in eu-central-1 for DB disaster recovery failover.
-- GitHub Actions for CI/CD pipeline:
-  - Runs unit tests locally.
-  - Builds and publishes Docker images.
-  - Deploys to Kubernetes with rolling update strategy.
-- Backup and restore jobs triggered via GitHub Actions.
+- Ansible configuration scripts for PostgreSQL Setup, DB Automated Backups & DR Region Failover
+- Ansible for logs and metrics for DBs with Prometheus & Alert Manager.
+- GitHub Actions for CI/CD pipeline
 
+## Prerequisites for Infrastructure Workflow (see CICD Pipeline README as well)
 
-## 🗂️ System Diagram
+- Terraform S3 State Bucket must be created with `aws-cli` locally before terraform can manage it otherwise the pipeline will fail.
+- AWS DynamoDB must be created with `aws-cli` locally before terraform can manage it otherwise the pipeline will fail.
+- The AWS ECR repository used in the pipeline must be created beforehand, with terraform locally.
+- You can create the ECR repository via Terraform by running the provided infrastructure code before triggering the pipeline.
+- Ensure AWS credentials and permissions are correctly configured.
 
-![alt text](architectural-diagram.drawio.png)
+### AWS CLI commands to create required resources:
+
+```bash
+# Create S3 bucket for Terraform state (replace <bucket-name> and <region>)
+aws s3api create-bucket --bucket <bucket-name> --region <region> --create-bucket-configuration LocationConstraint=<region>
+
+# Create DynamoDB table for Terraform state locking (replace <table-name>)
+aws dynamodb create-table \
+    --table-name <table-name> \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --region <region>
+
+# Create ECR repository (replace <repository-name>)
+aws ecr create-repository --repository-name <repository-name> --region <region>
+```
+
+---
+
+#  🗂️ System Diagram
+
+![alt text](architecture-diagram.drawio.png)
+
 
 This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
 To clarify:
@@ -99,33 +131,35 @@ To clarify:
 
 - In addition, the diagram shows VPC Peering similarly, this was not deployed for cost saving and local testing simplicity - In a real world production environment either VPC Peering or Transit Gateway would be configured and deployed - **More information around that can be found in the `ansible` directory `README.md`
 
-
-## 🚀 How to Run Locally
-
-- For Ansible: see `README.md` in `ansible` directory - **ALSO EXTENSIVE EXPLANATIONS OF REGION FAILOVER AND DECISIONS AROUND PROCESS FOR THE PURPOSE OF THIS PROJECT**
-- For Terraform: see `README.md` in `infra` directory
-- For Golang Application: see README..md in `dob-api` directory
+⚠️IF NEEDED, PLEASE DO DOWNLOAD FROM GITHUB  UI  AS SHOWN BELOW, FOR BETTER QUALITY VISIBILITY - HAVE ALSO INCLUDED IT AS .drawio file in the root of this project.
 
 
-## 📦 Deployment
+![alt text](<Screenshot 2025-06-06 at 16.34.59.png>)
 
-1. Use Terraform to provision infrastructure.
-2. Use GitHub Actions to build, test, and deploy.
-3. Monitor logs and metrics for DBs with Prometheus & Alert Manager.
+---
+
+## 🚀 How to Run Locally & In Depth Documentation Outside Of This README
+
+- For Ansible: see documentation in `ansible/README.md`.
+- For Terraform: see documentation  in the region folders in`infra/primary-region/README.md` & `infra/failover-region/README.md`.
+- For Golang Application: see documentation in `dob-api/cmd/server/README.md`.
+- For Golang API Setup: see documentation in `dob-api/internal/api/README-API.md`.
+- For Golang API Unit Testing: see documentation in `dob-api/internal/api/README-TESTS.md`.
+- For Docker Setup: see documentation in `dob-api/README-DOCKER.md`.
+- For CICD Pipelines Setup: see doucumentation in `.github/workflows/README.md`
+
 
 ---
 
 ## 🔐 Security for Ideal Production Environment
 
 - Any secrets exposed are for testing purposes only - in a real production scenario, Secrets Management would be enforced (e.g. Secrets Manager, Hashicorp Vault)
-- Secure SSH access limited to specific IPs.
 - Some security group rules are non-restrictive for testing purposes only from my local machine.
 
 ---
 
 ## 📚 Notes
 - Designed for self-hosted PostgreSQL, avoiding managed services.
-- Suitable for real-world SRE/DataOps challenges involving HA, DR, and automation.
 - Code quality and testing prioritized.
-- Use of common sense for validations, retries, and error handling.
+- Use of common sense for validations, retries, and error handling for the API app.
 - Application startup handles app user/table creation, removing the need for fragile logic in cloud-init scripts.

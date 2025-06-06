@@ -13,35 +13,25 @@ jobs:
     if: |
       github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: 1.24
+          cache: false
 
-      - name: Initialize go.sum
+      - name: Create mod cache directory
+        run: mkdir -p /home/runner/go/pkg/mod
+
+      - name: Build
         working-directory: dob-api
-        run: |
-          if [ ! -f go.sum ]; then
-            go mod init temp && go mod tidy > /dev/null 2>&1 || true
-          fi
+        run: go build -v ./...
 
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            dob-api/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Run Go Tests
+      - name: Test
         working-directory: dob-api
-        run: |
-          go mod tidy
-          go test $(go list ./...) -v -cover
+        run: go test -v ./...
 
   docker-build-push:
     name: Build and Push Docker Image to ECR

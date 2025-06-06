@@ -116,9 +116,6 @@ resource "aws_route_table_association" "private_db_subnet_assoc" {
   route_table_id = aws_route_table.private_db_rt.id
 }
 
-# No 0.0.0.0/0 routes in private route tables → no NAT gateway needed
-
-# VPC Endpoint for S3 Gateway (allows S3 access without internet/NAT)
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.primary.id
   service_name      = "com.amazonaws.${var.aws_region}.s3"
@@ -223,7 +220,6 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh_github_actions" {
 }
 
 # TEMP: Open PostgreSQL access to all for cross-region failover testing
-# NOTE: Tighten this down before production (use VPC CIDR or IP allowlist)
 resource "aws_vpc_security_group_ingress_rule" "allow_cross_region_db_access" {
   security_group_id = aws_security_group.sg_db.id
   from_port         = 5432
@@ -258,9 +254,6 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_outbound" {
   description       = "Allow all outbound traffic"
 }
 
-
-# Allow all outbound traffic from sg_app
-# Allow all outbound traffic from sg_app
 resource "aws_vpc_security_group_egress_rule" "app_allow_all_outbound" {
   security_group_id = aws_security_group.sg_app.id
   ip_protocol       = "-1"
@@ -268,7 +261,6 @@ resource "aws_vpc_security_group_egress_rule" "app_allow_all_outbound" {
   description       = "Allow all outbound traffic"
 }
 
-# Allow response traffic from app to ALB
 resource "aws_vpc_security_group_egress_rule" "app_allow_return_to_alb" {
   security_group_id = aws_security_group.sg_app.id
   ip_protocol       = "tcp"
@@ -357,7 +349,6 @@ resource "aws_lb_listener" "listener_http_alb" {
 }
 
 
-# Allocate an Elastic IP for the NAT Gateway
 resource "aws_eip" "nat_eip" {
   vpc = true
   tags = {
@@ -365,7 +356,6 @@ resource "aws_eip" "nat_eip" {
   }
 }
 
-# Create NAT Gateway in the public subnet
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public.id
@@ -378,14 +368,12 @@ resource "aws_nat_gateway" "nat_gw" {
   ]
 }
 
-# Add default route 0.0.0.0/0 in private app route table to NAT Gateway
 resource "aws_route" "private_app_nat_route" {
   route_table_id         = aws_route_table.private_app_rt.id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.nat_gw.id
 }
 
-# Add default route 0.0.0.0/0 in private db route table to NAT Gateway
 resource "aws_route" "private_db_nat_route" {
   route_table_id         = aws_route_table.private_db_rt.id
   destination_cidr_block = "0.0.0.0/0"

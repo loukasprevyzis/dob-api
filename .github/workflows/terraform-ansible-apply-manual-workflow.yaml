@@ -1,4 +1,4 @@
-name: dob-api - Terraform Apply and Ansible PSQL Setup in Production (Manual Workflow)
+name: dob-api - Terraform Apply and Ansible PSQL Setup in Production (Manually Triggered Workflow)
 
 on:
   workflow_dispatch:

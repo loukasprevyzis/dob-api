@@ -53,7 +53,7 @@ No resources.
 | <a name="input_app_db_user"></a> [app\_db\_user](#input\_app\_db\_user) | Database user for the application | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS Region | `string` | `"eu-west-1"` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | DB Cluster name | `string` | `"dob_api"` | no |
-| <a name="input_cluster_public_access_cidrs"></a> [cluster\_public\_access\_cidrs](#input\_cluster\_public\_access\_cidrs) | List of CIDR blocks allowed to access the EKS cluster API server | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
+| <a name="input_cluster_public_access_cidrs"></a> [cluster\_public\_access\_cidrs](#input\_cluster\_public\_access\_cidrs) | List of CIDR blocks allowed to access the ECS cluster API server | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_db_data_volume_size"></a> [db\_data\_volume\_size](#input\_db\_data\_volume\_size) | Size of EBS volume for PostgreSQL data (GB) | `number` | `100` | no |
 | <a name="input_docker_image_tag"></a> [docker\_image\_tag](#input\_docker\_image\_tag) | Docker image tag to deploy | `string` | `"latest"` | no |
 | <a name="input_docker_image_url"></a> [docker\_image\_url](#input\_docker\_image\_url) | n/a | `string` | `"123204938983.dkr.ecr.eu-west-1.amazonaws.com/dob-api"` | no |

@@ -21,7 +21,7 @@ variable "office_cidr" {
 }
 
 variable "cluster_public_access_cidrs" {
-  description = "List of CIDR blocks allowed to access the EKS cluster API server"
+  description = "List of CIDR blocks allowed to access the ECS cluster API server"
   type        = list(string)
   default     = ["0.0.0.0/0"] # Change this to your office IP or restrict as needed
 }

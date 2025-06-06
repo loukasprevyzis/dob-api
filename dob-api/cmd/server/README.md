@@ -1,7 +1,3 @@
-# dob-api
-
-A simple Go HTTP server with PostgreSQL integration that exposes a `/hello/` API and a health check endpoint.
-
 ## Features
 
 - Connects to a PostgreSQL database using environment variables
@@ -24,12 +20,21 @@ DB_PORT=your_db_port
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_NAME=your_db_name
+```
 
-A .env file can be found in the project root to set these variables for local development.
+>A .env file can be found in the project root to set these variables for local development.
 
+### Install Go Dependencies
+
+- `go mod tidy`
+
+### Start the Application
+
+- `go run main.go`
 For more info:
 
 ```
 REAMDE-DOCKER.MD
 READDME-API.MD
 ```
+

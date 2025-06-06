@@ -64,7 +64,7 @@ No resources.
 | <a name="input_region"></a> [region](#input\_region) | AWS Region | `string` | `"eu-west-1"` | no |
 | <a name="input_replica_ip"></a> [replica\_ip](#input\_replica\_ip) | IP address of the replica DB instance | `string` | `""` | no |
 | <a name="input_route53_health_check_id"></a> [route53\_health\_check\_id](#input\_route53\_health\_check\_id) | n/a | `string` | `""` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC ID where EKS and related resources will be deployed | `string` | n/a | yes |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC ID where ECS and related resources will be deployed | `string` | n/a | yes |
 
 ## Outputs
 

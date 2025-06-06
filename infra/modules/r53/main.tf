@@ -8,9 +8,6 @@ resource "aws_route53_zone" "primary" {
   }
 }
 
-
-
-
 resource "aws_route53_health_check" "primary" {
   fqdn              = var.alb_dns_name
   port              = 80
@@ -55,8 +52,8 @@ resource "aws_route53_record" "primary" {
 #   set_identifier  = "secondary"
 
 #   alias {
-#     name                   = "dummy-secondary-nlb.dns.name" # Replace with actual secondary NLB DNS name
-#     zone_id                = "dummy-secondary-nlb.zone.id" # Replace with actual secondary NLB zone ID
+#     name                   = "dummy-secondary-nlb.dns.name"
+#     zone_id                = "dummy-secondary-nlb.zone.id"
 #     evaluate_target_health = true
 #   }
 
