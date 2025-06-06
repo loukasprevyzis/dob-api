@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.24
-          cache: true
+          cache: false
 
       - name: Create mod cache directory
         run: mkdir -p /home/runner/go/pkg/mod

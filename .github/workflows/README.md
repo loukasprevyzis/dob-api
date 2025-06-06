@@ -2,6 +2,15 @@
 
 This repository implements a structured, production-grade GitHub Actions pipeline with clear separation of concerns and triggering conditions. The workflows are split into three files for clarity and control:
 
+## Prerequisites
+
+- Terraform S3 State Bucket must be created with `aws-cli` locally before terraform can manage it otherwise the pipeline will fail.
+- AWS DynamoDB must be created with `aws-cli` locally before terraform can manage it otherwise the pipeline will fail.
+- The AWS ECR repository used in the pipeline must be created beforehand, with terraform locally.
+- You can create the ECR repository via Terraform by running the provided infrastructure code before triggering the pipeline.
+- Ensure AWS credentials and permissions are correctly configured.
+
+
 ## CICD Pipeline (`dob-api CI/CD`)
 **Trigger:** Automatically on PRs to `main` or pushes to `main`.
 

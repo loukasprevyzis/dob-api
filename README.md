@@ -89,7 +89,35 @@ In a real world production environment the following would be implemented:
 - Ansible for logs and metrics for DBs with Prometheus & Alert Manager.
 - GitHub Actions for CI/CD pipeline
 
-## 🗂️ System Diagram
+## Prerequisites for Infrastructure Workflow (see CICD Pipeline README as well)
+
+- Terraform S3 State Bucket must be created with `aws-cli` locally before terraform can manage it otherwise the pipeline will fail.
+- AWS DynamoDB must be created with `aws-cli` locally before terraform can manage it otherwise the pipeline will fail.
+- The AWS ECR repository used in the pipeline must be created beforehand, with terraform locally.
+- You can create the ECR repository via Terraform by running the provided infrastructure code before triggering the pipeline.
+- Ensure AWS credentials and permissions are correctly configured.
+
+### AWS CLI commands to create required resources:
+
+```bash
+# Create S3 bucket for Terraform state (replace <bucket-name> and <region>)
+aws s3api create-bucket --bucket <bucket-name> --region <region> --create-bucket-configuration LocationConstraint=<region>
+
+# Create DynamoDB table for Terraform state locking (replace <table-name>)
+aws dynamodb create-table \
+    --table-name <table-name> \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --region <region>
+
+# Create ECR repository (replace <repository-name>)
+aws ecr create-repository --repository-name <repository-name> --region <region>
+```
+
+---
+
+#  🗂️ System Diagram
 
 ![alt text](architecture-diagram.png)
 
