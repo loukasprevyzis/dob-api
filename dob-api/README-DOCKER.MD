@@ -23,19 +23,19 @@ This project includes a multi-stage Dockerfile to build and run the `dob-api` Go
 
 ## How to Build and Run Locally
 
-1. **Build the Docker image**
+**Build the Docker image**
 
 ```bash
 docker build -t dob-api .
 ```
 
-2. **Run the container**
+**Run the container**
 
 ```bash
 docker run --rm -p 8080:8080 dob-api
 ```
 
-3. **Access the API**
+**Access the API**
 
 Open your browser or use `curl`:
 
@@ -53,21 +53,24 @@ docker buildx build --platform linux/amd64 -t dob-api .
 
 ## How to Push the Image to AWS ECR
 
-1. **Authenticate Docker to ECR**
+**Authenticate Docker to ECR**
 
 ```bash
 aws ecr get-login-password --region <your-region> \
   | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com
 ```
 
-2. **Tag the image**
+**Tag the image**
 
 ```bash
 docker tag dob-api:latest <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/dob-api:latest
 ```
 
-3. **Push the image**
+**Push the image**
 
 ```bash
 docker push <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/dob-api:latest
 ```
+
+
+>>Note: All steps above mentioned for local testing are handled by CICD too.

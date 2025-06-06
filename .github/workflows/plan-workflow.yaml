@@ -23,9 +23,13 @@ jobs:
       - name: Initialize go.sum
         working-directory: dob-api
         run: |
-          if [ ! -f go.sum ]; then
-            go mod init temp && go mod tidy > /dev/null 2>&1 || true
-          fi
+          touch go.mod && go mod tidy || true
+
+      - name: Run Go Tests
+        working-directory: dob-api
+        run: |
+          go mod tidy
+          go test $(go list ./...) -v -cover
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -33,15 +37,9 @@ jobs:
           path: |
             ~/go/pkg/mod
             dob-api/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('dob-api/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      - name: Run Go Tests
-        working-directory: dob-api
-        run: |
-          go mod tidy
-          go test $(go list ./...) -v -cover
 
   docker-build-push:
     name: Build and Push Docker Image to ECR
