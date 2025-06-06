@@ -26,9 +26,11 @@ jobs:
         run: mkdir -p /home/runner/go/pkg/mod
 
       - name: Build
+        working-directory: dob-api
         run: go build -v ./...
 
       - name: Test
+        working-directory: dob-api
         run: go test -v ./...
 
   docker-build-push:
