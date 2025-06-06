@@ -119,7 +119,7 @@ aws ecr create-repository --repository-name <repository-name> --region <region>
 
 #  🗂️ System Diagram
 
-![alt text](architecture-diagram.png)
+![alt text](architecture-diagram.drawio.png)
 
 
 This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
