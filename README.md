@@ -1,8 +1,7 @@
-# 🛠 dob-api — SRE/DataOps Engineer Assignment
+# 🛠 dob-api
 
-## 🎯 Goal
 
-Implement a highly available, disaster-resilient "Hello World" API service with:
+A highly available, disaster-resilient "Hello World" API service with:
 
 - A **Go-based HTTP API** with two endpoints:
   - `PUT /hello/<username>`: Save/update user’s date of birth (DOB).
