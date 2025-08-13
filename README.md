@@ -123,7 +123,7 @@ aws ecr create-repository --repository-name <repository-name> --region <region>
 
 This diagram represents the ideal production setup for this project, which for cost saving and local testing purposes it was deployed less restrictive (e.g. networking setup that can be seen in the main.tf of the networking terraform module) and without certain components.
 To clarify:
-- In the code's setup there is no R53 DNS with and no Failover Routing Policy for it. However in the diagram, it is suggested that this would be deployed in a production environment. It has been considered that if this project required a complete regional failover with DNS Failover Routing Policy etc., an additional standby ECS Cluster would be deployed as standby in the Disaster Recovery region as well. For better time management and personal cost saving, this was not included.
+- In the code's setup there is no R53 DNS with and no Failover Routing Policy for it. However in the diagram, it is suggested that this would be deployed in a production environment. It has been considered that if this project required a complete regional failover with DNS Failover Routing Policy etc., an additional standby ECS Cluster would be deployed as standby in the Disaster Recovery region as well. For personal cost saving, this was not included.
 
 - The EC2 instances for the Databases should be deployed in a private subnet, however in code, they were deployed in public subnets so they can be accessed via their Public IPs for local testing and DB Failover between regions. In a real world production environment, bastion hosts or VPN (e.g. AWS VPN Client would be configured and deployed).
 
